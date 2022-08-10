@@ -1,0 +1,33 @@
+{
+  "name": "wraiths",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html",
+    "tscheck": "tsc --noEmit"
+  },
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "staticFiles": {
+    "staticPath": "assets"
+  },
+  "dependencies": {
+    "@swc/helpers": "^0.4.3",
+    "camera-controls": "^1.36.1",
+    "postprocessing": "^6.28.5",
+    "random": "^3.0.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.143.0",
+    "typescript": "^4.7.4",
+    "zustand": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.17",
+    "@types/react-dom": "^18.0.6",
+    "@types/three": "^0.143.0",
+    "parcel": "^2.7.0",
+    "parcel-reporter-static-files-copy": "^1.4.0",
+    "process": "^0.11.10"
+  }
+}
