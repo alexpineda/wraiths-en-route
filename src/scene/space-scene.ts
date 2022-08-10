@@ -123,7 +123,7 @@ const INTRO_LOOP = async (elapsed: number) => {
     const g = camera.cameraState !== CameraState.UnderWraiths ? MathUtils.smoothstep(Math.pow(rear, 2.5), 0.25, 1) : 0;
     glitchEffect.minStrength = glitchMax.x * g;
     glitchEffect.maxStrength = glitchMax.y * g;
-    bloomEffect.intensity = 1 + rear * 0.5;
+    bloomEffect.intensity = 0.5 + rear * 1;
     starfield.object.position.copy(camera.get().position);
 
     composer.render(delta);
@@ -209,7 +209,11 @@ export async function createWraithScene(increment: () => void) {
     scene.add(battleLights.object);
     window.scene = scene;
     scene.userData = {
-        battleLights
+        battleLights,
+        wraiths,
+        battleCruiser,
+        asteroids,
+        controls
     }
 
     setInterval(() => {

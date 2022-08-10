@@ -15,10 +15,10 @@ export const createBattleCruiser = () => {
     let burners: ParticleSystem;
 
     return {
-        size: 4,
-        life: 100,
+        size: 5,
+        life: 10,
         velocity: 0,
-        alpha: 0.01,
+        alpha: 1,
         color: new Color(1, 1, 1),
         coordMultipler: new Vector3(.1, .1, .1),
         async load(envmap: Texture, particle: Texture) {
@@ -48,6 +48,7 @@ export const createBattleCruiser = () => {
                 MathUtils.lerp,
                 [0, .15, .33, .45, .66, .8, 1],
                 [0, 1, 0, 1, 0, 1, 0],
+                0.01
             );
 
             burners = createParticles({
@@ -81,7 +82,7 @@ export const createBattleCruiser = () => {
                     };
                 }
             });
-            burners.object.position.set(0, 2.4, 1.7);
+            burners.object.position.set(0, 2.4, 1.6);
             burners.object.scale.set(1, 0.5, 0.5)
 
             const burner1 = burners.object.clone();
@@ -102,13 +103,18 @@ export const createBattleCruiser = () => {
             return model;
         },
         elapsed: 0,
+        throbbingBurners: 0,
         update(delta: number, cameraRotateSpeed: number, camera: Camera) {
             this.elapsed += delta / (cameraRotateSpeed * 8);
+            this.throbbingBurners += delta / 50;
+
             const bcv = Math.sin(this.elapsed);
             battleCruiser.rotation.z = MathUtils.lerp(BC_START_ROT.z, BC_END_ROT.z, bcv);
             battleCruiser.rotation.x = MathUtils.lerp(BC_START_ROT.x, BC_END_ROT.x, bcv);
             battleCruiser.position.lerpVectors(BC_START_POS, BC_END_POS, bcv);
             burners.update(camera, delta);
+
+            this.alpha = 0.7 + Math.abs(Math.sin(this.throbbingBurners)) * 0.3;
         },
         get object() {
             return battleCruiser;

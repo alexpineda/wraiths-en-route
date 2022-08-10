@@ -51,7 +51,7 @@ export const createStarField = () => {
                         [0, 1, 1, 0, 0],
                         this.alpha
                     ),
-                    velocity: new Vector3(0, 0, -100000),
+                    velocity: new Vector3(0, 0, -200000),
                 }),
                 emit: () => {
                     const x = MathUtils.randFloatSpread(20);
@@ -141,7 +141,6 @@ export const createBattleLights = () => {
                         scale,
                         color: new Color(1, MathUtils.lerp(0.6, 1, scale / 2), MathUtils.lerp(0.4, 1, scale / 2)),
                         maxLife: life,
-                        maxFrame: 64,
                     };
                 },
             });

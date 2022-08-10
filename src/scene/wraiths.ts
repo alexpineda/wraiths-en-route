@@ -163,6 +163,7 @@ export const createWraiths = () => {
                 sortParticles: false,
                 update: (t: number, delta: number, p: Particle, opts: ParticleSystemOptions) => {
                     particleUpdate(t, delta, p, opts);
+                    p.frame = 10;
 
                 },
                 spriteMap: {
@@ -179,15 +180,11 @@ export const createWraiths = () => {
 
                     const position = new Vector3(x, y, z);
 
-                    // const life = MathUtils.randFloat(0.05, 0.6);
-                    // const scale = MathUtils.randFloat(0.8, 1) * 4.0;
-
                     return {
                         position,
                         scale: this.po.scale,
                         color: this.po.color,
                         maxLife: this.po.life,
-                        maxFrame: 64
                     };
                 }
             });
@@ -198,7 +195,6 @@ export const createWraiths = () => {
 
             wraiths.push(w1, w2, w3);
             wraithGroup.add(w1, w2, w3);
-            window.wraiths = this;
 
         },
         init() {
