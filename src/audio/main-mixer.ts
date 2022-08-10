@@ -53,7 +53,6 @@ export class MainMixer {
 
   async loadAudioBuffer(filename: string): Promise<AudioBuffer> {
     const buffer = await fetch(filename).then(res => res.arrayBuffer())
-    console.log(filename, buffer)
     return (await this.context.decodeAudioData(buffer.slice(0)));
   }
 

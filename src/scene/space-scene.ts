@@ -123,7 +123,7 @@ const INTRO_LOOP = async (elapsed: number) => {
     const g = camera.cameraState !== CameraState.UnderWraiths ? MathUtils.smoothstep(Math.pow(rear, 2.5), 0.25, 1) : 0;
     glitchEffect.minStrength = glitchMax.x * g;
     glitchEffect.maxStrength = glitchMax.y * g;
-
+    bloomEffect.intensity = 1 + rear * 0.5;
     starfield.object.position.copy(camera.get().position);
 
     composer.render(delta);
@@ -175,6 +175,10 @@ const _mousemove = (ev: MouseEvent) => {
 };
 
 export const getSurface = () => surface;
+const bloomEffect = new BloomEffect({
+    intensity: 1.25,
+    blendFunction: BlendFunction.SCREEN,
+})
 
 export async function createWraithScene(increment: () => void) {
     const janitor = new Janitor();
@@ -218,7 +222,7 @@ export async function createWraithScene(increment: () => void) {
     surface.setDimensions(
         window.innerWidth,
         window.innerHeight,
-        devicePixelRatio
+        1
     );
     composer.setSize(surface.bufferWidth, surface.bufferHeight, false);
 
@@ -228,10 +232,13 @@ export async function createWraithScene(increment: () => void) {
 
     controls.setLookAt(-3.15, 1.1, -0.7, 0, 0, 0, false);
     controls.zoomTo(1.75, false);
-    controls.mouseButtons.left = 0;
-    controls.mouseButtons.right = 0;
-    controls.mouseButtons.middle = 0;
-    controls.mouseButtons.wheel = 0;
+
+    // if (process.env.NODE_ENV !== 'production') {
+    //     controls.mouseButtons.left = 0;
+    //     controls.mouseButtons.right = 0;
+    //     controls.mouseButtons.middle = 0;
+    //     controls.mouseButtons.wheel = 0;
+    // }
 
     janitor.add(camera.init(controls, battleCruiser.object));
 
@@ -277,10 +284,7 @@ export async function createWraithScene(increment: () => void) {
         renderPass,
         new EffectPass(
             camera.get(),
-            new BloomEffect({
-                intensity: 1.25,
-                blendFunction: BlendFunction.SCREEN,
-            }),
+            bloomEffect,
             new SMAAEffect(),
             tone,
             godRaysEffect,

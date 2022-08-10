@@ -28,9 +28,9 @@ export const quadrants = (n: number, phase = 0) => {
             }
             return slices[a];
         },
-        entered(t: number, i: number, useRadT = false, useRadI = true) {
-            const a = this.getSlice(t, useRadT);
-            const b = this.getSlice(i, useRadI);
+        entered(i: number, azimuth: number, useRadT = false, useRadI = true) {
+            const a = this.getSlice(i, useRadT);
+            const b = this.getSlice(azimuth, useRadI);
             if (a === b) {
                 if (a === _entered) {
                     return false;
@@ -42,5 +42,24 @@ export const quadrants = (n: number, phase = 0) => {
                 return false;
             }
         },
+        distanceTo(i: number, a: number, midway = false) {
+            const b = this.getSlice(i);
+            if (midway) {
+                return Math.abs(a - phase - (b.rad[0] + (b.rad[1] - b.rad[0]) / 2));
+            } else {
+                return Math.abs(a - phase - b.rad[0]);
+            }
+        },
+        isBetween(t: number, t2: number, azimuth: number) {
+            const a0 = this.getSlice(t);
+            const a1 = this.getSlice(t2);
+            const b = this.getSlice(azimuth, true);
+            return b.i >= a0.i && b.i <= a1.i;
+        },
+        between(t: number, t2: number, azimuth: number) {
+            const a0 = this.getSlice(t);
+            const a1 = this.getSlice(t2);
+            return MathUtils.smoothstep(azimuth, a0.rad[0], a1.rad[1]);
+        }
     };
 };

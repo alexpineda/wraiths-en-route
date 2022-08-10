@@ -1,7 +1,7 @@
 import { createSpline } from "../utils/linear-spline";
-import { createParticles, ParticleSystem, ParticleSystemOptions } from "../utils/particles";
+import { createParticles, defaultUpdate, ParticleSystem } from "../utils/particles";
 import { upgradeStandardMaterial } from "../utils/material-utils";
-import { Camera, Color, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Texture, Vector3, Vector4 } from "three";
+import { Camera, Color, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Texture, Vector3 } from "three";
 import loadGlb from "../utils/load-glb";
 
 const BC_START_POS = new Vector3(-900, -250, -500);
@@ -54,15 +54,19 @@ export const createBattleCruiser = () => {
                 count: 4,
                 sortParticles: false,
                 sizeAttenuation: true,
-                size: _ => 10,
-                alpha: t => alphaSpline(t) * this.alpha,
+                update: defaultUpdate({
+                    alpha: t => alphaSpline(t) * this.alpha,
+                    size: 10,
+                    velocity: new Vector3(0, 0, this.velocity)
+                }),
                 spriteMap: {
                     tex: particle,
                     width: 8,
                     height: 8,
-                    frameCount: 64
+                    frameCount: 64,
+                    loop: 1
                 },
-                particleTemplate: () => {
+                emit: () => {
                     const x = MathUtils.randFloatSpread(1) * this.coordMultipler.x;
                     const y = MathUtils.randFloatSpread(1) * this.coordMultipler.y;
                     const z = MathUtils.randFloatSpread(1) * this.coordMultipler.z;
@@ -71,16 +75,9 @@ export const createBattleCruiser = () => {
 
                     return {
                         position,
-                        size: this.size,
-                        currentSize: this.size,
-                        alpha: MathUtils.randFloat(0.5, 1),
+                        scale: this.size,
                         color: this.color,
-                        life: this.life,
                         maxLife: this.life,
-                        angle: 0,
-                        velocity: new Vector3(0, 0, this.velocity),
-                        frame: 0,
-                        maxFrame: 64
                     };
                 }
             });

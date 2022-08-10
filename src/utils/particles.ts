@@ -74,43 +74,58 @@ void main() {
 }
 `;
 
-export type Particle = {
+export type ParticleDef = {
     position: THREE.Vector3;
-    size: number;
-    currentSize: number;
+    scale: number;
     color: THREE.Color;
-    alpha: number;
-    life: number;
     maxLife: number;
+};
+
+export type Particle = ParticleDef & {
+    currentSize: number;
+    life: number;
     angle: number;
-    velocity: THREE.Vector3;
-    frame?: number;
-    maxFrame?: number;
+    alpha: number;
+    frame: number;
 };
 
 export type ParticleSystemOptions = {
     count: number;
-    size: FnOrValue;
-    alpha: FnOrValue;
     sortParticles: boolean;
     sizeAttenuation: boolean;
+    update: (t: number, delta: number, particle: Particle, opts: ParticleSystemOptions) => void;
     spriteMap?: {
         tex: THREE.Texture;
         frameCount: number;
         width: number;
         height: number;
+        loop: number;
     },
-    particleTemplate: (opts: ParticleSystemOptions) => Particle;
+    emit: (opts: ParticleSystemOptions) => ParticleDef;
+    [key: string]: any;
 }
 
-type FnOrValue = (t: number, delta?: number, particle?: Particle) => number | number;
-const apply = (fnOrValue: FnOrValue, ...args: Parameters<FnOrValue>) => {
+type FnOrValue = ((t: number, delta: number, particle: Particle) => number) | number;
+
+const apply = (fnOrValue: FnOrValue, t: number, delta: number, particle: Particle) => {
     if (typeof fnOrValue === 'function') {
-        return fnOrValue(...args);
+        return fnOrValue(t, delta, particle);
     } else {
         return fnOrValue;
     }
 }
+
+const _velocityAdd = new Vector3;
+
+export const defaultUpdate = ({ alpha, size, velocity }: { alpha: FnOrValue, size: FnOrValue, velocity: Vector3 }) =>
+    (t: number, delta: number, p: Particle, opts: ParticleSystemOptions) => {
+        p.alpha = apply(alpha, t, delta, p);
+        p.currentSize = p.scale * apply(size, t, delta, p);
+        p.position.add(_velocityAdd.copy(velocity).multiplyScalar(delta / 1000));
+        if (opts.spriteMap) {
+            p.frame = Math.floor(opts.spriteMap.loop * t * opts.spriteMap.frameCount) % opts.spriteMap.frameCount;
+        }
+    }
 
 export function createParticles<T extends ParticleSystemOptions>(_opts: T) {
     const opts = _opts;
@@ -130,6 +145,8 @@ export function createParticles<T extends ParticleSystemOptions>(_opts: T) {
         }
     });
 
+    console.log("pointMultiplier", window.innerHeight * 0.5);
+
     if (opts.spriteMap) {
         material.defines.USE_SPRITEMAP = 1;
     }
@@ -141,10 +158,18 @@ export function createParticles<T extends ParticleSystemOptions>(_opts: T) {
     const points = new Points(geom, material);
     points.frustumCulled = false;
 
-    let particles = new Array<Particle>();
+    const onEmit = (particle: ParticleDef) => {
+        const out = particle as Particle;
+        out.life = particle.maxLife;
+        out.angle = 0;
+        out.frame = 0;
+        opts.update(0, 0, out, opts);
+        return out;
+    }
 
+    let particles = new Array<Particle>();
     for (let i = 0; i < opts.count; i++) {
-        particles.push(opts.particleTemplate(opts));
+        particles.push(onEmit(opts.emit(opts)));
     }
 
     let gdfsghk = 0;
@@ -156,8 +181,7 @@ export function createParticles<T extends ParticleSystemOptions>(_opts: T) {
         const n = Math.floor(gdfsghk * opts.count);
         gdfsghk -= n / opts.count;
         for (let i = 0; i < n; i++) {
-
-            particles.push(opts.particleTemplate(opts));
+            particles.push(onEmit(opts.emit(opts)));
         }
     }
 
@@ -214,18 +238,6 @@ export function createParticles<T extends ParticleSystemOptions>(_opts: T) {
         geom.attributes.frame.needsUpdate = !!opts.spriteMap;
     };
 
-    const _velocityAdd = new Vector3;
-
-    const updateParticle = (p: Particle, delta: number) => {
-        const t = 1.0 - p.life / p.maxLife;
-        p.alpha = apply(opts.alpha, t, delta, p);
-        p.currentSize = p.size * apply(opts.size, t, delta, p);
-        p.position.add(_velocityAdd.copy(p.velocity).multiplyScalar(delta / 1000));
-        if (opts.spriteMap) {
-            p.frame = Math.floor(t * p.maxFrame!);
-        }
-    }
-
     const updateParticles = (camera: THREE.Camera, delta: number) => {
         for (let p of particles) {
             p.life -= delta;
@@ -236,7 +248,8 @@ export function createParticles<T extends ParticleSystemOptions>(_opts: T) {
         });
 
         for (let p of particles) {
-            updateParticle(p, delta);
+            const t = 1.0 - p.life / p.maxLife;
+            opts.update(t, delta, p, opts);
         }
 
         if (opts.sortParticles) {

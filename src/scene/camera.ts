@@ -35,7 +35,6 @@ export const createCamera = () => {
             _minPolarAngle = _polarAngle = controls.polarAngle;
             _polarAngleRange = (Math.PI / 2 - _minPolarAngle) * 4;
 
-
             janitor.setInterval(() => {
                 if (this.cameraState === CameraState.RotateAroundWraiths) {
                     controls.zoomTo(Math.random() * 2 + 1.75);
@@ -43,6 +42,7 @@ export const createCamera = () => {
             }, 20000);
 
             janitor.setInterval(() => {
+                if (this.cameraState === CameraState.ManualOverride) return;
                 _evolvingCameraState = (++_evolvingCameraState) % evolvingCameraStates.length;
                 this.cameraState = evolvingCameraStates[_evolvingCameraState];
                 _prevPosition.copy(camera.position);

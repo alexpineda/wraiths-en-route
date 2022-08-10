@@ -1,7 +1,7 @@
 import { Camera, Color, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PointLight, Texture, Vector3, Vector4 } from "three";
 import { createSpline } from "../utils/linear-spline";
 import { upgradeStandardMaterial } from "../utils/material-utils";
-import { ParticleSystem, ParticleSystemOptions, createParticles } from "../utils/particles";
+import { ParticleSystem, Particle, createParticles, defaultUpdate, ParticleSystemOptions } from "../utils/particles";
 import loadGlb from "../utils/load-glb";
 import { playWraithComms } from "./wraith-noise";
 import { quadrants } from "../utils/quadrants";
@@ -14,6 +14,7 @@ export type Wraith = Object3D & {
     swerveMax: number;
     swerveRateDamp: number;
     swerveDamp: number;
+    [key: string]: any;
 };
 
 const wraithRed = 0xff0000;
@@ -112,7 +113,19 @@ export const createWraiths = () => {
 
     const quadrant = quadrants(4, Math.PI / 4);
 
+
     return {
+        po: {
+            get count() {
+                return burners.opts.count
+            }, set count(v) {
+                burners.opts.count = v;
+            },
+            life: 1,
+            scale: 0.5,
+            color: new Color(1, 0.5, 0.1),
+            velocity: new Vector3(0, 0, -700),
+        },
         async load(envmap: Texture, particle: Texture) {
 
             const { model } = await loadGlb("./wraith.glb", envmap);
@@ -127,48 +140,53 @@ export const createWraiths = () => {
                 }
             });
 
+            const particleUpdate = defaultUpdate(
+                {
+                    size: createSpline(
+                        MathUtils.lerp,
+                        [0, .12, .24, 0.36, 0.48, 1],
+                        [2, 2, .5, .35, 0.1, 0.1],
+                        0.05
+                    ),
+                    alpha: createSpline(
+                        MathUtils.lerp,
+                        [0, .12, .24, 0.36, 0.48, 0.86, 1],
+                        [0.3, 0.3, 0.5, 1, 0.5, 0.1, 0],
+                    ),
+                    velocity: new Vector3(0, 0, -700)
+                }
+            )
+
             burners = createParticles({
                 count: 5000,
                 sizeAttenuation: true,
-                size: createSpline(
-                    MathUtils.lerp,
-                    [0, .07, .2, 0.5, 1],
-                    [0, 1.5, .1, .1, 0],
-                    0.03
-                ),
                 sortParticles: false,
-                alpha: createSpline(
-                    MathUtils.lerp,
-                    [0, .1, 0.3, 1],
-                    [0, 1, 0.1, 0]
-                ),
+                update: (t: number, delta: number, p: Particle, opts: ParticleSystemOptions) => {
+                    particleUpdate(t, delta, p, opts);
+
+                },
                 spriteMap: {
                     tex: particle,
                     width: 8,
                     height: 8,
-                    frameCount: 64
+                    frameCount: 64,
+                    loop: 1
                 },
-                particleTemplate: () => {
+                emit: () => {
                     const x = MathUtils.randFloatSpread(0.02);
                     const y = MathUtils.randFloatSpread(0.02);
                     const z = MathUtils.randFloatSpread(0.02);
 
                     const position = new Vector3(x, y, z);
 
-                    const life = MathUtils.randFloat(0.05, 0.6);
-                    const size = MathUtils.randFloat(0.8, 1) * 4.0;
+                    // const life = MathUtils.randFloat(0.05, 0.6);
+                    // const scale = MathUtils.randFloat(0.8, 1) * 4.0;
 
                     return {
                         position,
-                        size,
-                        currentSize: size,
-                        alpha: MathUtils.randFloat(0.5, 1),
-                        color: new Color(1, 0.5, 0.1),
-                        life,
-                        maxLife: life,
-                        angle: 0,
-                        velocity: new Vector3(0, 0, -1400),
-                        frame: 0,
+                        scale: this.po.scale,
+                        color: this.po.color,
+                        maxLife: this.po.life,
                         maxFrame: 64
                     };
                 }
@@ -180,8 +198,7 @@ export const createWraiths = () => {
 
             wraiths.push(w1, w2, w3);
             wraithGroup.add(w1, w2, w3);
-            window.wraiths = wraiths;
-            window.group = wraithGroup;
+            window.wraiths = this;
 
         },
         init() {
@@ -198,11 +215,17 @@ export const createWraiths = () => {
             if (playComms && quadrant.entered(0, azimuth)) {
                 playWraithComms(rear);
             }
+            // this.po.color.g = 0.5 + rear * 0.5;
+            // this.po.color.b = 0.1 + rear * 0.9;
+
         },
         dispose() {
             for (const wraith of wraiths) {
                 wraith.dispose();
             }
+        },
+        get wraiths() {
+            return wraiths;
         },
         get object() {
             return wraithGroup;
