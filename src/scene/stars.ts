@@ -1,4 +1,4 @@
-import { Float32BufferAttribute, MathUtils, Points, PointsMaterial, BufferGeometry, Vector3, Vector4, Texture } from "three";
+import { Float32BufferAttribute, MathUtils, Points, PointsMaterial, BufferGeometry, Vector3, Vector4, Texture, Camera, Color } from "three";
 import { createSpline } from "../utils/linear-spline";
 import { createParticles, ParticleSystem, ParticleSystemOptions } from "../utils/particles";
 import random from "random";
@@ -45,10 +45,10 @@ export const createStarField = () => {
                 ),
                 coordScale: 1,
                 sortParticles: false,
-                particleTemplate: (opts: ParticleSystemOptions) => {
-                    const x = MathUtils.randFloatSpread(20) * opts.coordScale;
-                    const y = MathUtils.randFloatSpread(20) * opts.coordScale;
-                    const z = MathUtils.randFloatSpread(100) * opts.coordScale;
+                particleTemplate: () => {
+                    const x = MathUtils.randFloatSpread(20);
+                    const y = MathUtils.randFloatSpread(20);
+                    const z = MathUtils.randFloatSpread(100);
 
                     const position = new Vector3(x, y, z);
 
@@ -59,11 +59,12 @@ export const createStarField = () => {
                         position,
                         size,
                         currentSize: size,
-                        color: new Vector4(1, 0.6, 0.4, MathUtils.randFloat(0.5, 1)),
+                        alpha: MathUtils.randFloat(0.5, 1),
+                        color: new Color(1, 0.6, 0.4),
                         life,
                         maxLife: life,
                         angle: 0,
-                        velocity: new Vector3(0, 0, -100000 * opts.coordScale),
+                        velocity: new Vector3(0, 0, -100000),
                     };
                 },
             });
@@ -81,7 +82,6 @@ export const createStarField = () => {
     }
 }
 
-
 export const createBattleLights = () => {
     let stars: ParticleSystem;
     const dist = random.normal(0, 1);
@@ -89,7 +89,7 @@ export const createBattleLights = () => {
     return {
         load(tex: Texture) {
             stars = createParticles({
-                count: 5,
+                count: 8,
                 sizeAttenuation: true,
                 size: createSpline(
                     MathUtils.lerp,
@@ -111,9 +111,9 @@ export const createBattleLights = () => {
                 coordScale: 5,
                 sortParticles: false,
                 particleTemplate: (opts: ParticleSystemOptions) => {
-                    const x = MathUtils.randFloatSpread(10) * opts.coordScale * dist();
-                    const y = MathUtils.randFloatSpread(10) * opts.coordScale * dist();;
-                    const z = MathUtils.randFloatSpread(10) * opts.coordScale * dist();;
+                    const x = MathUtils.randFloatSpread(50) * dist();
+                    const y = MathUtils.randFloatSpread(50) * dist();;
+                    const z = MathUtils.randFloatSpread(50) * dist();;
 
                     const position = new Vector3(x, y, z);
 
@@ -125,7 +125,8 @@ export const createBattleLights = () => {
                         position,
                         size,
                         currentSize: size,
-                        color: new Vector4(1, MathUtils.lerp(0.6, 1, size / 2), MathUtils.lerp(0.4, 1, size / 2), MathUtils.randFloat(0.5, 1)),
+                        alpha: MathUtils.randFloat(0.5, 1),
+                        color: new Color(1, MathUtils.lerp(0.6, 1, size / 2), MathUtils.lerp(0.4, 1, size / 2)),
                         life,
                         maxLife: life,
                         angle: 0,
@@ -135,13 +136,20 @@ export const createBattleLights = () => {
                     };
                 },
             });
-            stars.object.position.set(-130, -130, 200);
+            stars.object.position.copy(this.battleStartPosition);
         },
         get opts() {
             return stars.opts;
         },
-        update(...args: Parameters<ParticleSystem["update"]>) {
-            stars.update(...args);
+        battleStartPosition: new Vector3(-130, -100, 150),
+        battleEndPosition: new Vector3(-130, -130, 200),
+        startAngle: Math.PI / 3,
+        endAngle: Math.PI,
+        update(camera: Camera, delta: number, azimuth: number) {
+            const r = MathUtils.smoothstep(azimuth, this.startAngle, this.endAngle);
+            this.opts.count = Math.floor(MathUtils.pingpong(r * 24, 6)) + 2;
+            stars.object.position.lerpVectors(this.battleStartPosition, this.battleEndPosition, r);
+            stars.update(camera, delta);
         },
         get object() {
             return stars.object;

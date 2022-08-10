@@ -14,7 +14,7 @@ const evolvingCameraStates = [CameraState.UnderBattleCruiser, CameraState.UnderW
 let _evolvingCameraState = -1;
 let _prevPosition = new Vector3();
 
-export const CAMERA_ROTATE_SPEED = 12000;
+export const CAMERA_ROTATE_SPEED = 5000;
 let _cameraRotateSpeed = CAMERA_ROTATE_SPEED / 2;
 let _destCameraSpeed = CAMERA_ROTATE_SPEED;
 
@@ -33,7 +33,7 @@ export const createCamera = () => {
         },
         init(controls: CameraControls, battleCruiser: Object3D) {
             _minPolarAngle = _polarAngle = controls.polarAngle;
-            _polarAngleRange = (Math.PI / 2 - _minPolarAngle) * 2;
+            _polarAngleRange = (Math.PI / 2 - _minPolarAngle) * 4;
 
 
             janitor.setInterval(() => {

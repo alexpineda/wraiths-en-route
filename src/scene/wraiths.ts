@@ -1,26 +1,27 @@
-import { Camera, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PointLight, Texture, Vector3, Vector4 } from "three";
+import { Camera, Color, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PointLight, Texture, Vector3, Vector4 } from "three";
 import { createSpline } from "../utils/linear-spline";
 import { upgradeStandardMaterial } from "../utils/material-utils";
 import { ParticleSystem, ParticleSystemOptions, createParticles } from "../utils/particles";
 import loadGlb from "../utils/load-glb";
 import { playWraithComms } from "./wraith-noise";
+import { quadrants } from "../utils/quadrants";
 
 export type Wraith = Object3D & {
     init: () => void;
-    update: (delta: number, elapsed: number) => void;
+    update: (delta: number) => void;
     dispose: () => void;
+    swerveMin: number;
+    swerveMax: number;
+    swerveRateDamp: number;
+    swerveDamp: number;
 };
 
 const wraithRed = 0xff0000;
 const wraithBlue = 0x0033ff;
 
-let _lastWraithSoundPlayed = true;
-let _wraithPlaySpot = Math.PI / 2 + (Math.PI / 3) * Math.random();
-let _playCounter = 0;
-
 const createWraith = (og: Object3D, originalPosition: Vector3, particles: ParticleSystem, i: number) => {
-    let _swerveRate = 1000;
-    let _nextSwerveRate = 1000;
+    let swerveRate = 1000;
+    let nextSwerveRate = 1000;
     let _nextSwerveAngle = Math.PI / 3.5;
 
     let [wx, wy, wz] = [
@@ -51,6 +52,8 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
     particles.object.position.set(0, 0, -0.2);
     wraith.add(particles.object.clone());
 
+    const elapsed = [0, 0, 0, 0];
+
     return Object.assign(wraith, {
         init() {
             this.position.copy(originalPosition);
@@ -67,20 +70,30 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
                 _b++;
             }, 1000 + Math.random() * 1000);
         },
-        update(delta: number, elapsed: number) {
-            _swerveRate = MathUtils.damp(_swerveRate, _nextSwerveRate, 0.001, delta);
-            if (Math.abs(_swerveRate - _nextSwerveRate) < 1) {
-                _nextSwerveRate = Math.random() * 5000 + 10000;
+        swerveMax: 15000,
+        swerveMin: 2000,
+        swerveRateDamp: 0.001,
+        swerveDamp: 0.001,
+        update(delta: number) {
+            swerveRate = MathUtils.damp(swerveRate, nextSwerveRate, this.swerveRateDamp, delta);
+            if (Math.abs(swerveRate - nextSwerveRate) < 1) {
+                nextSwerveRate = MathUtils.randInt(this.swerveMin, this.swerveMax);
             }
+
+            elapsed[0] += delta / swerveRate
+            elapsed[1] += delta / wx
+            elapsed[2] += delta / wy
+            elapsed[3] += delta / wz
+
             this.rotation.z = MathUtils.damp(
                 this.rotation.z,
-                Math.sin(elapsed / _swerveRate) * _nextSwerveAngle,
-                0.001,
+                Math.sin(elapsed[0]) * _nextSwerveAngle,
+                this.swerveDamp,
                 delta
             );
-            this.position.x = originalPosition.x + Math.sin(elapsed / wx) * 0.3;
-            this.position.y = originalPosition.y + Math.sin(elapsed / wy) * 0.3;
-            this.position.z = originalPosition.z + Math.sin(elapsed / wz) * 0.3;
+            this.position.x = originalPosition.x + Math.sin(elapsed[0]) * 0.3;
+            this.position.y = originalPosition.y + Math.sin(elapsed[1]) * 0.3;
+            this.position.z = originalPosition.z + Math.sin(elapsed[2]) * 0.3;
         },
         dispose() {
             clearInterval(_interval0);
@@ -97,6 +110,7 @@ export const createWraiths = () => {
     let burners: ParticleSystem;
 
 
+    const quadrant = quadrants(4, Math.PI / 4);
 
     return {
         async load(envmap: Texture, particle: Texture) {
@@ -123,7 +137,6 @@ export const createWraiths = () => {
                     0.03
                 ),
                 sortParticles: false,
-                coordScale: 0.04,
                 alpha: createSpline(
                     MathUtils.lerp,
                     [0, .1, 0.3, 1],
@@ -135,10 +148,10 @@ export const createWraiths = () => {
                     height: 8,
                     frameCount: 64
                 },
-                particleTemplate: (opts: ParticleSystemOptions) => {
-                    const x = MathUtils.randFloatSpread(0.5) * opts.coordScale;
-                    const y = MathUtils.randFloatSpread(0.5) * opts.coordScale
-                    const z = MathUtils.randFloatSpread(0.5) * opts.coordScale;
+                particleTemplate: () => {
+                    const x = MathUtils.randFloatSpread(0.02);
+                    const y = MathUtils.randFloatSpread(0.02);
+                    const z = MathUtils.randFloatSpread(0.02);
 
                     const position = new Vector3(x, y, z);
 
@@ -149,11 +162,12 @@ export const createWraiths = () => {
                         position,
                         size,
                         currentSize: size,
-                        color: new Vector4(1, 0.5, 0.1, MathUtils.randFloat(0.5, 1)),
+                        alpha: MathUtils.randFloat(0.5, 1),
+                        color: new Color(1, 0.5, 0.1),
                         life,
                         maxLife: life,
                         angle: 0,
-                        velocity: new Vector3(0, 0, -35000 * opts.coordScale),
+                        velocity: new Vector3(0, 0, -1400),
                         frame: 0,
                         maxFrame: 64
                     };
@@ -166,6 +180,8 @@ export const createWraiths = () => {
 
             wraiths.push(w1, w2, w3);
             wraithGroup.add(w1, w2, w3);
+            window.wraiths = wraiths;
+            window.group = wraithGroup;
 
         },
         init() {
@@ -173,23 +189,15 @@ export const createWraiths = () => {
                 wraith.init();
             }
         },
-        update(delta: number, elapsed: number, camera: Camera, normalizedAzimuthAngle: number, rear: number) {
+        update(delta: number, camera: Camera, azimuth: number, rear: number, playComms: boolean) {
             for (const wraith of wraiths) {
-                wraith.update(delta, elapsed);
+                wraith.update(delta);
             }
             burners.update(camera, delta);
 
-            if (normalizedAzimuthAngle > _wraithPlaySpot) {
-                if (!_lastWraithSoundPlayed) {
-                    _playCounter++;
-                    playWraithComms(rear);
-                }
-                _lastWraithSoundPlayed = true;
-            } else {
-                _wraithPlaySpot = Math.PI / 2 + (Math.PI / 3) * Math.random();
-                _lastWraithSoundPlayed = false;
+            if (playComms && quadrant.entered(0, azimuth)) {
+                playWraithComms(rear);
             }
-
         },
         dispose() {
             for (const wraith of wraiths) {

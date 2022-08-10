@@ -1,7 +1,7 @@
 import { createSpline } from "../utils/linear-spline";
 import { createParticles, ParticleSystem, ParticleSystemOptions } from "../utils/particles";
 import { upgradeStandardMaterial } from "../utils/material-utils";
-import { Camera, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Texture, Vector3, Vector4 } from "three";
+import { Camera, Color, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Texture, Vector3, Vector4 } from "three";
 import loadGlb from "../utils/load-glb";
 
 const BC_START_POS = new Vector3(-900, -250, -500);
@@ -19,7 +19,7 @@ export const createBattleCruiser = () => {
         life: 100,
         velocity: 0,
         alpha: 0.01,
-        color: new Vector4(1, 1, 1, MathUtils.randFloat(0.5, 1)),
+        color: new Color(1, 1, 1),
         coordMultipler: new Vector3(.1, .1, .1),
         async load(envmap: Texture, particle: Texture) {
             const { model } = await loadGlb(
@@ -62,24 +62,23 @@ export const createBattleCruiser = () => {
                     height: 8,
                     frameCount: 64
                 },
-                coordScale: 1,
-                particleTemplate: (opts: ParticleSystemOptions) => {
+                particleTemplate: () => {
                     const x = MathUtils.randFloatSpread(1) * this.coordMultipler.x;
                     const y = MathUtils.randFloatSpread(1) * this.coordMultipler.y;
                     const z = MathUtils.randFloatSpread(1) * this.coordMultipler.z;
 
                     const position = new Vector3(x, y, z);
 
-
                     return {
                         position,
                         size: this.size,
                         currentSize: this.size,
+                        alpha: MathUtils.randFloat(0.5, 1),
                         color: this.color,
                         life: this.life,
                         maxLife: this.life,
                         angle: 0,
-                        velocity: new Vector3(0, 0, this.velocity * opts.coordScale),
+                        velocity: new Vector3(0, 0, this.velocity),
                         frame: 0,
                         maxFrame: 64
                     };
@@ -105,8 +104,10 @@ export const createBattleCruiser = () => {
 
             return model;
         },
-        update(delta: number, elapsed: number, cameraRotateSpeed: number, camera: Camera) {
-            const bcv = Math.sin(elapsed / (cameraRotateSpeed * 8));
+        elapsed: 0,
+        update(delta: number, cameraRotateSpeed: number, camera: Camera) {
+            this.elapsed += delta / (cameraRotateSpeed * 8);
+            const bcv = Math.sin(this.elapsed);
             battleCruiser.rotation.z = MathUtils.lerp(BC_START_ROT.z, BC_END_ROT.z, bcv);
             battleCruiser.rotation.x = MathUtils.lerp(BC_START_ROT.x, BC_END_ROT.x, bcv);
             battleCruiser.position.lerpVectors(BC_START_POS, BC_END_POS, bcv);

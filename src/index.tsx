@@ -143,7 +143,7 @@ export const SceneContainer = () => {
               <div style={{ fontFamily: "Inter" }}>
                 <p>
                   <span>Warning:</span> This exhibit may potentially trigger
-                  siezures for people with photosensitive epilepsy
+                  seizures for people with photosensitive epilepsy
                 </p>
                 <p>
                   <span>Legal:</span>This fan project is not associated with

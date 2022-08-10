@@ -71,6 +71,8 @@ const asteroids = createAsteroids();
 const wraiths = createWraiths();
 const starfield = createStarField();
 const battleLights = createBattleLights();
+let wraithNoise: WraithNoise;
+
 
 const renderer = new WebGLRenderer({
     powerPreference: "high-performance",
@@ -101,35 +103,26 @@ const INTRO_LOOP = async (elapsed: number) => {
 
     controls.update(delta / 1000);
 
-    const normalizedAzimuthAngle = THREE.MathUtils.euclideanModulo(
+    const azimuth = THREE.MathUtils.euclideanModulo(
         controls.azimuthAngle,
-        360 * THREE.MathUtils.DEG2RAD
+        Math.PI * 2
     );
     const rear =
-        normalizedAzimuthAngle < Math.PI
-            ? normalizedAzimuthAngle / Math.PI
-            : 2 - normalizedAzimuthAngle / Math.PI;
+        azimuth < Math.PI
+            ? azimuth / Math.PI
+            : 2 - azimuth / Math.PI;
 
-    camera.update(delta, controls, normalizedAzimuthAngle, mouse);
+    camera.update(delta, controls, azimuth, mouse);
 
-    //TODO CHANGE TO DELTA
-    wraiths.update(delta, elapsed, camera.get(), normalizedAzimuthAngle, rear);
-    battleCruiser.update(delta, elapsed, CAMERA_ROTATE_SPEED, camera.get());
-    starfield.update(normalizedAzimuthAngle, camera.get(), delta);
-    battleLights.update(camera.get(), delta);
+    wraiths.update(delta, camera.get(), azimuth, rear, camera.cameraState === CameraState.RotateAroundWraiths);
+    battleCruiser.update(delta, CAMERA_ROTATE_SPEED, camera.get());
+    starfield.update(azimuth, camera.get(), delta);
+    battleLights.update(camera.get(), delta, azimuth);
 
-    const g = MathUtils.smoothstep(Math.pow(rear, 2.5), 0.25, 1);
+    wraithNoise.value = camera.cameraState === CameraState.RotateAroundWraiths ? rear : 0;
+    const g = camera.cameraState !== CameraState.UnderWraiths ? MathUtils.smoothstep(Math.pow(rear, 2.5), 0.25, 1) : 0;
     glitchEffect.minStrength = glitchMax.x * g;
     glitchEffect.maxStrength = glitchMax.y * g;
-
-
-    if (camera.cameraState === CameraState.RotateAroundWraiths) {
-        _noiseInstance.value = rear;
-        glitchEffect.blendMode.setOpacity(0.5);
-    } else {
-        glitchEffect.blendMode.setOpacity(0);
-        _noiseInstance.value = 0;
-    }
 
     starfield.object.position.copy(camera.get().position);
 
@@ -183,19 +176,11 @@ const _mousemove = (ev: MouseEvent) => {
 
 export const getSurface = () => surface;
 
-// window._clap = () => {
-//     console.log("position", controls.getPosition());
-//     console.log("target", controls.getTarget());
-//     console.log("zoom", _zoom)
-// }
-
-let _noiseInstance: WraithNoise;
-
 export async function createWraithScene(increment: () => void) {
     const janitor = new Janitor();
 
-    _noiseInstance = janitor.add(createWraithNoise());
-    _noiseInstance.start();
+    wraithNoise = janitor.add(createWraithNoise());
+    wraithNoise.start();
     increment();
 
     janitor.addEventListener(window, "resize", _sceneResizeHandler, {
@@ -218,6 +203,10 @@ export async function createWraithScene(increment: () => void) {
     scene.add(asteroids.object);
     scene.add(starfield.object);
     scene.add(battleLights.object);
+    window.scene = scene;
+    scene.userData = {
+        battleLights
+    }
 
     setInterval(() => {
         playRemix();

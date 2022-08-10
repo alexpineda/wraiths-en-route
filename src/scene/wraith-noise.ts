@@ -63,8 +63,6 @@ export const createWraithNoise = () => {
 };
 export type WraithNoise = ReturnType<typeof createWraithNoise>;
 
-
-
 const _wraithSounds = [
     "tphrdy00.wav",
     "tphwht00.wav",
@@ -81,14 +79,27 @@ const _wraithSounds = [
     "tphpss03.wav",
     "tphpss05.wav",
     "tphpss06.wav",
-]
+].sort(() => Math.random() - 0.5);
 
-export const playWraithComms = async (rear: number) => {
+let _lastPlayed = 0;
+let _lastTimePlayed = 0;
+
+export const playWraithComms = async (rear: number, particularFile?: string) => {
+    if (!particularFile && Date.now() - _lastTimePlayed < 10000) {
+        return;
+    }
+    _lastTimePlayed = Date.now();
+
+    const fileName = particularFile ?? _wraithSounds[_lastPlayed];
     const sound = mixer.context.createBufferSource();
     sound.buffer = await mixer.loadAudioBuffer(
-        `./phoenix/${_wraithSounds[MathUtils.randInt(0, _wraithSounds.length - 1)]}`
+        `./phoenix/${fileName}`
     );
     sound.detune.value = -200 * rear;
+
+    if (!particularFile) {
+        _lastPlayed = (_lastPlayed + 1) % _wraithSounds.length;
+    }
 
     const filter = new Filter("bandpass", 40);
     filter.changeQ(3);
@@ -98,7 +109,15 @@ export const playWraithComms = async (rear: number) => {
         mixer.connect(sound, filter.node, mixer.createGain(2), mixer.intro)
     );
     sound.start();
-    sound.onended = () => janitor.mopUp();
+    sound.onended = () => {
+        janitor.mopUp();
+
+        if (fileName === "tphpss03.wav" && Math.random() > 0.5) {
+            playWraithComms(rear, "tphpss04.wav");
+        }
+    }
+
+
 }
 
 export const playRemix = async () => {
