@@ -14,7 +14,7 @@ const evolvingCameraStates = [CameraState.UnderBattleCruiser, CameraState.UnderW
 let _evolvingCameraState = -1;
 let _prevPosition = new Vector3();
 
-export const CAMERA_ROTATE_SPEED = 5000;
+export const CAMERA_ROTATE_SPEED = 10000;
 let _cameraRotateSpeed = CAMERA_ROTATE_SPEED / 2;
 let _destCameraSpeed = CAMERA_ROTATE_SPEED;
 
