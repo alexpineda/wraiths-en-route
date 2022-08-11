@@ -1,4 +1,4 @@
-import { Camera, Color, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PointLight, Texture, Vector3, Vector4 } from "three";
+import { Camera, Color, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Texture, Vector3, Vector4 } from "three";
 import { createSpline } from "../utils/linear-spline";
 import { upgradeStandardMaterial } from "../utils/material-utils";
 import { ParticleSystem, Particle, createParticles, defaultUpdate, ParticleSystemOptions } from "../utils/particles";
@@ -202,7 +202,7 @@ export const createWraiths = () => {
                 wraith.init();
             }
         },
-        update(delta: number, camera: Camera, azimuth: number, rear: number, playComms: boolean) {
+        update(delta: number, camera: PerspectiveCamera, azimuth: number, rear: number, playComms: boolean) {
             for (const wraith of wraiths) {
                 wraith.update(delta);
             }

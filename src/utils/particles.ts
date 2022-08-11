@@ -5,6 +5,7 @@ import { Points } from 'three/src/objects/Points';
 import { ShaderMaterial } from 'three/src/materials/ShaderMaterial';
 import { Vector2 } from 'three/src/math/Vector2';
 import { Vector3 } from 'three/src/math/Vector3';
+import { MathUtils } from 'three';
 
 const fragmentShader = `
 #ifdef USE_SPRITEMAP
@@ -34,7 +35,7 @@ varying vec4 vColor;
 `;
 
 const vertexShader = `
-uniform float pointMultiplier;
+uniform float scale;
 attribute float size;
 attribute vec4 color;
 varying vec4 vColor;
@@ -53,7 +54,7 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
   
   gl_Position = projectionMatrix * mvPosition;
-  gl_PointSize = pointMultiplier * size;
+  gl_PointSize = scale * size;// * projectionMatrix[0][0];
   
   vColor = color;
 
@@ -139,13 +140,11 @@ export function createParticles<T extends ParticleSystemOptions>(_opts: T) {
         fragmentShader,
         vertexShader,
         uniforms: {
-            pointMultiplier: { value: window.innerHeight * 0.5 },
+            scale: { value: 1 },
             diffuseTexture: { value: opts.spriteMap?.tex },
             uFrame: { value: new Vector2(opts.spriteMap?.width ?? 1, opts.spriteMap?.height ?? 1) }
         }
     });
-
-    console.log("pointMultiplier", window.innerHeight * 0.5);
 
     if (opts.spriteMap) {
         material.defines.USE_SPRITEMAP = 1;
@@ -269,12 +268,14 @@ export function createParticles<T extends ParticleSystemOptions>(_opts: T) {
         get object() {
             return points;
         },
-        update(camera: THREE.Camera, delta: number) {
+        update(camera: THREE.PerspectiveCamera, delta: number) {
             const d = delta / 1000;
-            material.uniforms.pointMultiplier.value = window.innerHeight * 0.5;
+            material.uniforms.scale.value = Math.abs(window.innerHeight / (2 * Math.tan(MathUtils.degToRad(camera.getEffectiveFOV() * 0.5))));
+
             addParticles(d);
             updateParticles(camera, d);
             updateGeometry();
+
         }
     };
 };

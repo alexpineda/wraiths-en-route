@@ -236,13 +236,7 @@ export async function createWraithScene(increment: () => void) {
 
     controls.setLookAt(-3.15, 1.1, -0.7, 0, 0, 0, false);
     controls.zoomTo(1.75, false);
-
-    // if (process.env.NODE_ENV !== 'production') {
-    //     controls.mouseButtons.left = 0;
-    //     controls.mouseButtons.right = 0;
-    //     controls.mouseButtons.middle = 0;
-    //     controls.mouseButtons.wheel = 0;
-    // }
+    controls.enabled = false;
 
     janitor.add(camera.init(controls, battleCruiser.object));
 

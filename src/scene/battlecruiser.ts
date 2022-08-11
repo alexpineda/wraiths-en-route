@@ -1,7 +1,7 @@
 import { createSpline } from "../utils/linear-spline";
 import { createParticles, defaultUpdate, ParticleSystem } from "../utils/particles";
 import { upgradeStandardMaterial } from "../utils/material-utils";
-import { Camera, Color, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Texture, Vector3 } from "three";
+import { Camera, Color, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera, Texture, Vector3 } from "three";
 import loadGlb from "../utils/load-glb";
 
 const BC_START_POS = new Vector3(-900, -250, -500);
@@ -82,7 +82,7 @@ export const createBattleCruiser = () => {
                     };
                 }
             });
-            burners.object.position.set(0, 2.4, 1.6);
+            burners.object.position.set(0, 2.5, 1.6);
             burners.object.scale.set(1, 0.5, 0.5)
 
             const burner1 = burners.object.clone();
@@ -96,15 +96,15 @@ export const createBattleCruiser = () => {
             burner2.scale.setX(0.5);
             burner2.position.set(0.4, 2.25, 1.5);
 
-            burner4.position.setY(0.5);
+            burner4.position.setY(2);
 
-            model.add(burner1, burner2, burner3);
+            model.add(burner1, burner2, burner3, burner4);
 
             return model;
         },
         elapsed: 0,
         throbbingBurners: 0,
-        update(delta: number, cameraRotateSpeed: number, camera: Camera) {
+        update(delta: number, cameraRotateSpeed: number, camera: PerspectiveCamera) {
             this.elapsed += delta / (cameraRotateSpeed * 8);
             this.throbbingBurners += delta / 50;
 
@@ -119,6 +119,9 @@ export const createBattleCruiser = () => {
         get object() {
             return battleCruiser;
         },
+        get particles() {
+            return burners;
+        }
     }
 
 }

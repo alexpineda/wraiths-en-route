@@ -1,4 +1,4 @@
-import { Float32BufferAttribute, MathUtils, Points, PointsMaterial, BufferGeometry, Vector3, Vector4, Texture, Camera, Color } from "three";
+import { Float32BufferAttribute, MathUtils, Points, PointsMaterial, BufferGeometry, Vector3, Vector4, Texture, Camera, Color, PerspectiveCamera } from "three";
 import { createSpline } from "../utils/linear-spline";
 import { createParticles, defaultUpdate, ParticleSystem, ParticleSystemOptions } from "../utils/particles";
 import random from "random";
@@ -153,7 +153,7 @@ export const createBattleLights = () => {
         battleEndPosition: new Vector3(-130, -130, 200),
         startAngle: Math.PI / 3,
         endAngle: Math.PI,
-        update(camera: Camera, delta: number, azimuth: number) {
+        update(camera: PerspectiveCamera, delta: number, azimuth: number) {
             const r = MathUtils.smoothstep(azimuth, this.startAngle, this.endAngle);
             this.opts.count = Math.floor(MathUtils.pingpong(r * 24, 6)) + 3;
             stars.object.position.lerpVectors(this.battleStartPosition, this.battleEndPosition, r);
