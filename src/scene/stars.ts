@@ -1,6 +1,6 @@
-import { Float32BufferAttribute, MathUtils, Points, PointsMaterial, BufferGeometry, Vector3, Vector4, Texture, Camera, Color, PerspectiveCamera } from "three";
+import { Float32BufferAttribute, MathUtils, Points, PointsMaterial, BufferGeometry, Vector3, Texture, Color, PerspectiveCamera } from "three";
 import { createSpline } from "../utils/linear-spline";
-import { createParticles, defaultUpdate, ParticleSystem, ParticleSystemOptions } from "../utils/particles";
+import { createParticles, defaultUpdate, ParticleSystem } from "../utils/particles";
 import random from "random";
 import { quadrants } from "../utils/quadrants";
 
@@ -40,7 +40,8 @@ export const createStarField = () => {
         alpha: 1,
         load() {
             stars = createParticles({
-                count: 1,
+                id: "stars",
+                count: 10,
                 sizeAttenuation: false,
                 sortParticles: false,
                 update: defaultUpdate({
@@ -54,9 +55,9 @@ export const createStarField = () => {
                     velocity: new Vector3(0, 0, -200000),
                 }),
                 emit: () => {
-                    const x = MathUtils.randFloatSpread(20);
-                    const y = MathUtils.randFloatSpread(20);
-                    const z = MathUtils.randFloatSpread(100);
+                    const x = MathUtils.randFloatSpread(5);
+                    const y = MathUtils.randFloatSpread(5);
+                    const z = 100;
 
                     const position = new Vector3(x, y, z);
 
@@ -78,12 +79,6 @@ export const createStarField = () => {
             } else if (quadrant.entered(1, azimuth)) {
                 this.alpha = 1;
             }
-            if (blast.entered(39, azimuth)) {
-                stars.opts.count = 20;
-            }
-            if (blast.entered(41, azimuth)) {
-                stars.opts.count = 1;
-            }
 
             stars.update(...args);
         },
@@ -100,6 +95,7 @@ export const createBattleLights = () => {
     return {
         load(tex: Texture) {
             stars = createParticles({
+                id: "battle-lights",
                 count: 9,
                 sizeAttenuation: true,
                 update: defaultUpdate({

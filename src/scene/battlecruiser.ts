@@ -1,8 +1,10 @@
 import { createSpline } from "../utils/linear-spline";
-import { createParticles, defaultUpdate, ParticleSystem } from "../utils/particles";
+import { createParticles, defaultUpdate, Particle, ParticleSystem, ParticleSystemDefinition } from "../utils/particles";
 import { upgradeStandardMaterial } from "../utils/material-utils";
-import { Camera, Color, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera, Texture, Vector3 } from "three";
+import { Color, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera, SphereBufferGeometry, Texture, Vector3 } from "three";
 import loadGlb from "../utils/load-glb";
+import random from "random";
+import { createNoise2D } from "simplex-noise";
 
 const BC_START_POS = new Vector3(-900, -250, -500);
 const BC_END_POS = new Vector3(-320, -560, -500);
@@ -13,10 +15,13 @@ export const createBattleCruiser = () => {
 
     let battleCruiser: Object3D;
     let burners: ParticleSystem;
+    let updateBurners = () => { };
+
+    const dist = createNoise2D();
 
     return {
-        size: 5,
-        life: 10,
+        size: 0.1,
+        life: 1,
         velocity: 0,
         alpha: 1,
         color: new Color(1, 1, 1),
@@ -44,22 +49,33 @@ export const createBattleCruiser = () => {
             model.rotation.z = BC_START_ROT.z;
             model.position.copy(BC_START_POS);
 
+            // const alphaSpline = createSpline(
+            //     MathUtils.lerp,
+            //     [0, .15, .33, .45, .66, .8, 1],
+            //     [0.5, 1, 0.5, 1, 0.5, 1, 0.5],
+            //     0.1
+            // );
             const alphaSpline = createSpline(
                 MathUtils.lerp,
                 [0, .15, .33, .45, .66, .8, 1],
-                [0, 1, 0, 1, 0, 1, 0],
-                0.01
+                [0.5, 1, 0.5, 1, 0.5, 1, 0.5],
+                0.1
             );
+            const pUpdate = defaultUpdate({
+                alpha: t => (1 - t) * 0.1,//dist(t, 0) * 0.1,
+                size: 10,
+                velocity: new Vector3(0, 0, this.velocity)
+            });
 
             burners = createParticles({
+                id: "battlecruiser-burners",
                 count: 4,
                 sortParticles: false,
                 sizeAttenuation: true,
-                update: defaultUpdate({
-                    alpha: t => alphaSpline(t) * this.alpha,
-                    size: 10,
-                    velocity: new Vector3(0, 0, this.velocity)
-                }),
+                geometry: new SphereBufferGeometry(0.5, 10, 10),
+                update: (t: number, delta: number, p: Particle, opts: ParticleSystemDefinition) => {
+                    pUpdate(t, delta, p, opts)
+                },
                 spriteMap: {
                     tex: particle,
                     width: 8,
@@ -82,23 +98,30 @@ export const createBattleCruiser = () => {
                     };
                 }
             });
-            burners.object.position.set(0, 2.5, 1.6);
+            burners.object.position.set(0, 2.5, 1.3);
             burners.object.scale.set(1, 0.5, 0.5)
+            burners.object.rotation.y = -Math.PI / 2;
+            const burner1 = burners.clone();
+            const burner2 = burners.clone();
+            const burner3 = burners.clone();
+            const burner4 = burners.clone();
 
-            const burner1 = burners.object.clone();
-            const burner2 = burners.object.clone();
-            const burner3 = burners.object.clone();
-            const burner4 = burners.object.clone();
+            // burner1.object.scale.setX(0.5);
+            burner1.object.position.set(-0.4, 2.25, 1.2);
 
-            burner1.scale.setX(0.5);
-            burner1.position.set(-0.4, 2.25, 1.5);
+            // burner2.object.scale.setX(0.5);
+            burner2.object.position.set(0.4, 2.25, 1.2);
 
-            burner2.scale.setX(0.5);
-            burner2.position.set(0.4, 2.25, 1.5);
+            burner4.object.position.setY(2);
 
-            burner4.position.setY(2);
+            model.add(burner1.object, burner2.object, burner3.object, burner4.object);
 
-            model.add(burner1, burner2, burner3, burner4);
+            updateBurners = () => {
+                burner1.update();
+                burner2.update();
+                burner3.update();
+                burner4.update();
+            }
 
             return model;
         },
@@ -115,6 +138,7 @@ export const createBattleCruiser = () => {
             burners.update(camera, delta);
 
             this.alpha = 0.7 + Math.abs(Math.sin(this.throbbingBurners)) * 0.3;
+            updateBurners()
         },
         get object() {
             return battleCruiser;

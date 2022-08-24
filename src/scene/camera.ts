@@ -14,10 +14,14 @@ const evolvingCameraStates = [CameraState.UnderBattleCruiser, CameraState.UnderW
 let _evolvingCameraState = -1;
 let _prevPosition = new Vector3();
 
-export const CAMERA_ROTATE_SPEED = 10000;
+export const CAMERA_ROTATE_SPEED = 5000;
 let _cameraRotateSpeed = CAMERA_ROTATE_SPEED / 2;
 let _destCameraSpeed = CAMERA_ROTATE_SPEED;
 
+let _paused = false;
+window.pauseCamera = () => {
+    _paused = !_paused;
+}
 export const createCamera = () => {
     let _polarAngleRange = 0;
     let _minPolarAngle = 0;
@@ -68,7 +72,7 @@ export const createCamera = () => {
             return () => janitor.mopUp()
         },
         update(delta: number, controls: CameraControls, normalizedAzimuthAngle: number, mouse: Vector3) {
-
+            if (_paused) return;
             if (
                 normalizedAzimuthAngle > Math.PI * (4 / 3) &&
                 normalizedAzimuthAngle < Math.PI * (5 / 3)

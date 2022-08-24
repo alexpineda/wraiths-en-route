@@ -46,6 +46,8 @@ import { loadSkybox } from "../utils/skybox";
 CameraControls.install({ THREE: THREE });
 
 const camera = createCamera();
+window.camera = camera.get();
+
 const controls = new CameraControls(camera.get(), document.body);
 controls.maxPolarAngle = Infinity;
 controls.minPolarAngle = -Infinity;
@@ -83,7 +85,7 @@ const renderer = new WebGLRenderer({
     precision: "highp",
 });
 renderer.outputEncoding = sRGBEncoding;
-renderer.debug.checkShaderErrors = false;
+renderer.debug.checkShaderErrors = true;
 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = PCFSoftShadowMap;
