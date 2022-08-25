@@ -24,7 +24,9 @@ export function loadGlb(
   meshCb: (mesh: Mesh) => void = () => { }
 ): Promise<GlbResponse> {
   assetIndex++;
+  console.log(assetIndex)
   return new Promise((resolve, reject) => {
+    const index = assetIndex;
     new GLTFLoader().load(
       file,
       (glb: any) => {
@@ -48,7 +50,7 @@ export function loadGlb(
         resolve({ model, animations });
       },
       (xhr) => {
-        useStore.getState().setAssetLoading(assetIndex - 1, xhr.loaded / xhr.total);
+        useStore.getState().setAssetLoading(index - 1, xhr.loaded / xhr.total);
       },
       (error: any) => {
         console.error(error);
