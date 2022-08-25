@@ -1,10 +1,10 @@
-import { Camera, Color, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Texture, Vector3, Vector4 } from "three";
-import { createSpline } from "../utils/linear-spline";
-import { upgradeStandardMaterial } from "../utils/material-utils";
-import { ParticleSystem, Particle, createParticles, defaultUpdate, ParticleSystemDefinition } from "../utils/particles";
-import loadGlb from "../utils/load-glb";
+import { Color, Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera, PointLight, Texture, Vector3 } from "three";
+import { createSpline } from "@utils/linear-spline";
+import { upgradeStandardMaterial } from "@utils/material-utils";
+import { ParticleSystem, Particle, createParticles, defaultUpdate, ParticleSystemDefinition } from "@utils/particles";
+import loadGlb from "@utils/load-glb";
 import { playWraithComms } from "./wraith-noise";
-import { quadrants } from "../utils/quadrants";
+import { quadrants } from "@utils/quadrants";
 
 export type Wraith = Object3D & {
     init: () => void;

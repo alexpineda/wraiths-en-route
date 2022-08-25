@@ -12,7 +12,20 @@
     "staticPath": "assets"
   },
   "alias": {
-    "@utils": "./src/utils/*"
+    "@utils/janitor": "./src/utils/janitor",
+    "@utils/surface": "./src/utils/surface",
+    "@utils/particles": "./src/utils/particles",
+    "@utils/range": "./src/utils/range",
+    "@utils/quadrants": "./src/utils/quadrants",
+    "@utils/material-utils": "./src/utils/material-utils",
+    "@utils/linear-spline": "./src/utils/linear-spline",
+    "@utils/load-glb": "./src/utils/load-glb",
+    "@utils/skybox": "./src/utils/skybox",
+    "@utils/env-map": "./src/utils/env-map",
+    "@utils/wrapped-canvas": "./src/utils/wrapped-canvas",
+    "@utils/wait-for": "./src/utils/wait-for",
+    "@audio/filter": "./src/audio/filter.ts",
+    "@audio/main-mixer": "./src/audio/main-mixer.ts"
   },
   "dependencies": {
     "@swc/helpers": "^0.4.3",

@@ -1,4 +1,4 @@
-import loadEnvironmentMap from "../utils/env-map";
+import loadEnvironmentMap from "@utils/env-map";
 import {
     BlendFunction,
     BloomEffect,
@@ -28,10 +28,11 @@ import {
     Vector2,
     Vector3,
     WebGLRenderer,
+    DefaultLoadingManager
 } from "three";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
-import Janitor from "../utils/janitor";
+import Janitor from "@utils/janitor";
 import { createBattleLights, createStarField, distantStars } from "./stars";
 import { createBattleCruiser } from "./battlecruiser";
 import { createAsteroids } from "./asteroids";
@@ -40,8 +41,8 @@ import { createWraiths } from "./wraiths";
 import { CameraState, CAMERA_ROTATE_SPEED, createCamera } from "./camera";
 import { useStore } from "../store";
 
-import Surface from "../utils/surface";
-import { loadSkybox } from "../utils/skybox";
+import Surface from "@utils/surface";
+import { loadSkybox } from "@utils/skybox";
 
 CameraControls.install({ THREE: THREE });
 
@@ -155,13 +156,12 @@ export const preloadIntro = async () => {
     const envmap = await loadEnvironmentMap("./envmap.hdr");
     increment();
 
-    await battleCruiser.load(envmap, fireTexture);
-    increment();
-
-    await asteroids.load(envmap);
-    increment();
-
-    await wraiths.load(envmap, fireTexture);
+    const models = [
+        battleCruiser.load(envmap, fireTexture).then(() => increment()),
+        asteroids.load(envmap).then(() => increment()),
+        wraiths.load(envmap, fireTexture)
+    ]
+    await Promise.all(models);
 
     battleLights.load(fireTexture);
     starfield.load();

@@ -1,7 +1,7 @@
 import { MathUtils } from "three";
-import { Filter } from "../audio/filter";
-import { mixer } from "../audio/main-mixer";
-import Janitor from "../utils/janitor";
+import { Filter } from "@audio/filter";
+import { mixer } from "@audio/main-mixer";
+import Janitor from "@utils/janitor";
 
 export const createWraithNoise = () => {
     const { source: highNoise, gain: highGain } = mixer.noise();

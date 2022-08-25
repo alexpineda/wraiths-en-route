@@ -1,3 +1,4 @@
+import { useStore } from "../store";
 import {
   AnimationClip,
   Color,
@@ -10,6 +11,8 @@ import {
 
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
+let assetIndex = 0;
+
 export type GlbResponse = {
   model: Group;
   animations: AnimationClip[];
@@ -20,6 +23,7 @@ export function loadGlb(
   name = "",
   meshCb: (mesh: Mesh) => void = () => { }
 ): Promise<GlbResponse> {
+  assetIndex++;
   return new Promise((resolve, reject) => {
     new GLTFLoader().load(
       file,
@@ -43,7 +47,9 @@ export function loadGlb(
 
         resolve({ model, animations });
       },
-      undefined,
+      (xhr) => {
+        useStore.getState().setAssetLoading(assetIndex - 1, xhr.loaded / xhr.total);
+      },
       (error: any) => {
         console.error(error);
         reject(error);

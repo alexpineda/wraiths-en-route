@@ -5,6 +5,7 @@ import { Vector3 } from 'three/src/math/Vector3';
 import { Box3, BufferGeometry, Color, InstancedMesh, Matrix4, Object3D, PlaneBufferGeometry } from 'three';
 import { InstancedUniformsMesh } from 'three-instanced-uniforms-mesh';
 
+
 const fragmentShader = `
 #ifdef USE_SPRITEMAP
 

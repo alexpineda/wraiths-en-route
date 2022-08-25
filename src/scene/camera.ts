@@ -1,4 +1,4 @@
-import Janitor from "../utils/janitor";
+import Janitor from "@utils/janitor";
 import CameraControls from "camera-controls";
 import { MathUtils, Object3D, PerspectiveCamera, Vector3 } from "three";
 import { playWraithComms } from "./wraith-noise";

@@ -1,16 +1,16 @@
 import { createRoot } from "react-dom/client";
 
-import { Filter } from "./audio/filter";
-import { mixer } from "./audio/main-mixer";
+import { Filter } from "@audio/filter";
+import { mixer } from "@audio/main-mixer";
 import {
   createWraithScene,
   getSurface,
   preloadIntro,
 } from "./scene/space-scene";
-import Janitor from "./utils/janitor";
-import { waitForSeconds } from "./utils/wait-for";
+import Janitor from "@utils/janitor";
+import { waitForSeconds } from "@utils/wait-for";
 import { useStore } from "./store";
-import { WrappedCanvas } from "./utils/wrapped-canvas";
+import { WrappedCanvas } from "@utils/wrapped-canvas";
 
 export const root = createRoot(document.getElementById("app")!);
 
@@ -47,7 +47,7 @@ export const LoadBar = ({
   thickness: number;
   style?: {};
 }) => {
-  const progress = useStore((store) => (store.loading + 1) / 10);
+  const progress = useStore((store) => store.totalAssetLoading);
 
   return (
     <div

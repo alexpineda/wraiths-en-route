@@ -1,7 +1,7 @@
 import { Euler, InstancedMesh, MathUtils, Matrix4, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, Quaternion, Texture, Vector3 } from "three";
-import loadGlb from "../utils/load-glb";
-import { upgradeStandardMaterial } from "../utils/material-utils";
-import range from "../utils/range";
+import loadGlb from "@utils/load-glb";
+import { upgradeStandardMaterial } from "@utils/material-utils";
+import range from "@utils/range";
 
 export const createAsteroids = () => {
 

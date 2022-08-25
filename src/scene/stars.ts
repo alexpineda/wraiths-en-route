@@ -1,8 +1,8 @@
 import { Float32BufferAttribute, MathUtils, Points, PointsMaterial, BufferGeometry, Vector3, Texture, Color, PerspectiveCamera } from "three";
-import { createSpline } from "../utils/linear-spline";
-import { createParticles, defaultUpdate, ParticleSystem } from "../utils/particles";
+import { createSpline } from "@utils/linear-spline";
+import { createParticles, defaultUpdate, ParticleSystem } from "@utils/particles";
 import random from "random";
-import { quadrants } from "../utils/quadrants";
+import { quadrants } from "@utils/quadrants";
 
 export const distantStars = () => {
     const vertices = [];

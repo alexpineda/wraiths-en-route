@@ -1,5 +1,4 @@
-import { AudioContext, Vector3 } from "three";
-const _position = new Vector3;
+import { AudioContext } from "three";
 export class MainMixer {
   gain: GainNode;
   context: AudioContext;

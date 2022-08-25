@@ -1,10 +1,7 @@
-import { createSpline } from "../utils/linear-spline";
-import { createParticles, defaultUpdate, Particle, ParticleSystem, ParticleSystemDefinition } from "../utils/particles";
-import { upgradeStandardMaterial } from "../utils/material-utils";
+import { createParticles, defaultUpdate, Particle, ParticleSystem, ParticleSystemDefinition } from "@utils/particles";
+import { upgradeStandardMaterial } from "@utils/material-utils";
 import { Color, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PerspectiveCamera, SphereBufferGeometry, Texture, Vector3 } from "three";
-import loadGlb from "../utils/load-glb";
-import random from "random";
-import { createNoise2D } from "simplex-noise";
+import loadGlb from "@utils/load-glb";
 
 const BC_START_POS = new Vector3(-900, -250, -500);
 const BC_END_POS = new Vector3(-320, -560, -500);
@@ -17,13 +14,11 @@ export const createBattleCruiser = () => {
     let burners: ParticleSystem;
     let updateBurners = () => { };
 
-    const dist = createNoise2D();
-
     return {
         size: 0.1,
         life: 1,
         velocity: 0,
-        alpha: 1,
+        alpha: 0.05,
         color: new Color(1, 1, 1),
         coordMultipler: new Vector3(.1, .1, .1),
         async load(envmap: Texture, particle: Texture) {
@@ -49,20 +44,9 @@ export const createBattleCruiser = () => {
             model.rotation.z = BC_START_ROT.z;
             model.position.copy(BC_START_POS);
 
-            // const alphaSpline = createSpline(
-            //     MathUtils.lerp,
-            //     [0, .15, .33, .45, .66, .8, 1],
-            //     [0.5, 1, 0.5, 1, 0.5, 1, 0.5],
-            //     0.1
-            // );
-            const alphaSpline = createSpline(
-                MathUtils.lerp,
-                [0, .15, .33, .45, .66, .8, 1],
-                [0.5, 1, 0.5, 1, 0.5, 1, 0.5],
-                0.1
-            );
+
             const pUpdate = defaultUpdate({
-                alpha: t => (1 - t) * 0.1,//dist(t, 0) * 0.1,
+                alpha: t => (1 - t) * this.alpha * 0.1,
                 size: 10,
                 velocity: new Vector3(0, 0, this.velocity)
             });
@@ -106,10 +90,8 @@ export const createBattleCruiser = () => {
             const burner3 = burners.clone();
             const burner4 = burners.clone();
 
-            // burner1.object.scale.setX(0.5);
             burner1.object.position.set(-0.4, 2.25, 1.2);
 
-            // burner2.object.scale.setX(0.5);
             burner2.object.position.set(0.4, 2.25, 1.2);
 
             burner4.object.position.setY(2);
