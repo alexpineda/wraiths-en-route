@@ -11,7 +11,7 @@ import {
 } from "three";
 
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { MeshOptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { MeshoptDecoder } from "./mesh-opt-decoder";
 import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader";
 
 let assetIndex = 0;
@@ -36,7 +36,7 @@ export function loadGlb(
     ktx2Loader.detectSupport(r);
     r.dispose();
 
-    new GLTFLoader().setMeshoptDecoder(MeshOptDecoder).setKTX2Loader(ktx2Loader).load(
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2Loader).load(
       file,
       (glb: any) => {
         const { scene: model, animations } = glb;
