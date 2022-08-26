@@ -2,26 +2,28 @@ import { createRoot } from "react-dom/client";
 
 import { Filter } from "@audio/filter";
 import { mixer } from "@audio/main-mixer";
-import {
-  createWraithScene,
-  getSurface,
-  preloadIntro,
-} from "./scene/space-scene";
+import { getSurface, wraithScene } from "./scene/space-scene";
 import Janitor from "@utils/janitor";
 import { waitForSeconds } from "@utils/wait-for";
-import { useStore } from "./store";
+import { SceneStatus, useStore } from "./store";
 import { WrappedCanvas } from "@utils/wrapped-canvas";
+import { getGPUTier } from "detect-gpu";
+import { renderer } from "@renderer";
 
 export const root = createRoot(document.getElementById("app")!);
 
-let _start: () => void;
+let _start: () => void = () => {};
 
 const preload = async () => {
-  const increment = await preloadIntro();
+  const gpuTier = await getGPUTier({
+    glContext: renderer.getContext(),
+  });
+  console.log(gpuTier);
+  const scene = wraithScene(gpuTier.tier);
+  await scene.preloadIntro();
 
   const dropYourSocks = mixer.context.createBufferSource();
   dropYourSocks.buffer = await mixer.loadAudioBuffer("./drop-your-socks.mp3");
-  increment();
 
   const janitor = new Janitor(
     mixer.connect(dropYourSocks, new Filter("bandpass", 50).node, mixer.intro)
@@ -31,12 +33,17 @@ const preload = async () => {
   _start = async () => {
     dropYourSocks.detune.setValueAtTime(-200, mixer.context.currentTime + 5);
     dropYourSocks.start();
-    await createWraithScene(increment);
+    await scene.init();
     await waitForSeconds(2);
-    useStore.setState({ loading: 10 });
+    useStore.getState().setStatus(SceneStatus.Playing);
     document.body.style.cursor = "none";
+    _start = () => {};
   };
+
+  useStore.getState().setStatus(SceneStatus.Loaded);
 };
+
+window.addEventListener("click", () => _start());
 
 export const LoadBar = ({
   color,
@@ -66,8 +73,12 @@ export const LoadBar = ({
 
 export const SceneContainer = () => {
   const surface = getSurface();
-  const progress = useStore((store) => store.loading);
-
+  const status = useStore((store) => store.status);
+  console.log(
+    SceneStatus[status],
+    status === SceneStatus.Playing,
+    status !== SceneStatus.Playing
+  );
   return (
     <div
       style={{
@@ -84,74 +95,72 @@ export const SceneContainer = () => {
         alignItems: "center",
       }}
     >
-      {progress === 10 && (
-        <WrappedCanvas canvas={surface.canvas} style={{ zIndex: "-1" }} />
+      {status === SceneStatus.Playing && (
+        <WrappedCanvas canvas={surface.canvas} />
       )}
-      {progress < 10 && (
-        <div id="welcome" style={{ width: "var(--size-content-3)" }}>
-          {progress < 10 && (
-            <p
+      {status !== SceneStatus.Playing && (
+        <div id="welcome" style={{ maxWidth: "var(--size-content-3)" }}>
+          <p
+            style={{
+              fontSize: "var(--font-size-5)",
+              textAlign: "center",
+            }}
+          >
+            "Wraiths En Route"
+          </p>
+          <LoadBar
+            color="white"
+            thickness={20}
+            style={{ marginBlock: "var(--size-10)" }}
+          />
+          <div
+            style={{
+              justifyContent: "center",
+              display: "flex",
+            }}
+          >
+            <button
               style={{
-                fontSize: "var(--font-size-5)",
-                textAlign: "center",
+                cursor: "pointer",
+                paddingInline: "var(--size-10)",
+                paddingBlock: "var(--size-3)",
+                background: "var(--green-9)",
+                color: "white",
+                fontSize: "var(--font-size-8)",
+                borderRadius: "var(--radius-2)",
+                marginBottom: "var(--size-4)",
+                visibility:
+                  status === SceneStatus.Loading ? "hidden" : "visible",
+              }}
+              onClick={(evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+                _start();
               }}
             >
-              "Wraiths En Route"
-            </p>
-          )}
-          {progress < 10 && progress !== 5 && (
-            <LoadBar
-              color="white"
-              thickness={20}
-              style={{ marginBlock: "var(--size-10)" }}
-            />
-          )}
-          {progress === 5 && (
-            <div
-              style={{
-                justifyContent: "center",
-                display: "flex",
-              }}
-            >
-              <button
-                style={{
-                  cursor: "pointer",
-                  paddingInline: "var(--size-10)",
-                  paddingBlock: "var(--size-3)",
-                  background: "var(--green-9)",
-                  color: "white",
-                  fontSize: "var(--font-size-8)",
-                  borderRadius: "var(--radius-2)",
-                  marginBottom: "var(--size-4)",
-                }}
-                onClick={_start}
-              >
-                Start
-              </button>
+              Start
+            </button>
+          </div>
+          <>
+            <div style={{ marginBottom: "1.5rem", lineHeight: "0.9rem" }}>
+              <p style={{ fontWeight: 100 }}>Scene Design / Programmer:</p>{" "}
+              <p>Alex Pineda</p>
             </div>
-          )}
-          {progress <= 10 && (
-            <>
-              <div style={{ marginBottom: "1.5rem", lineHeight: "0.9rem" }}>
-                <p style={{ fontWeight: 100 }}>Scene Design / Programmer:</p>{" "}
-                <p>Alex Pineda</p>
-              </div>
-              <div style={{ marginBottom: "3rem", lineHeight: "0.9rem" }}>
-                <p>Wraith, BattleCruiser and Asteroid Models:</p>{" "}
-                <p>Robert Rose</p>
-              </div>
-              <div style={{ fontFamily: "Inter" }}>
-                <p>
-                  <span>Warning:</span> This exhibit may potentially trigger
-                  seizures for people with photosensitive epilepsy
-                </p>
-                <p>
-                  <span>Legal:</span>This fan project is not associated with
-                  Blizzard. Audio snippets are copyright of Blizzard/Activision.
-                </p>
-              </div>
-            </>
-          )}
+            <div style={{ marginBottom: "3rem", lineHeight: "0.9rem" }}>
+              <p>Wraith, BattleCruiser and Asteroid Models:</p>{" "}
+              <p>Robert Rose</p>
+            </div>
+            <div style={{ fontFamily: "Inter" }}>
+              <p>
+                <span>Warning:</span> This exhibit may potentially trigger
+                seizures for people with photosensitive epilepsy
+              </p>
+              <p>
+                <span>Legal:</span>This fan project is not associated with
+                Blizzard. Audio snippets are copyright of Blizzard/Activision.
+              </p>
+            </div>
+          </>
         </div>
       )}
     </div>

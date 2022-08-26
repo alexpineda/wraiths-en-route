@@ -14,12 +14,11 @@ const evolvingCameraStates = [CameraState.UnderBattleCruiser, CameraState.UnderW
 let _evolvingCameraState = -1;
 let _prevPosition = new Vector3();
 
-export const CAMERA_ROTATE_SPEED = 8000;
-let _cameraRotateSpeed = CAMERA_ROTATE_SPEED / 4;
-let _destCameraSpeed = CAMERA_ROTATE_SPEED;
 
 
-export const createCamera = () => {
+export const createCamera = (quality: number) => {
+    const CAMERA_ROTATE_SPEED = quality * 1500;
+
     let _polarAngleRange = 0;
     let _polarAngle = 0;
 
@@ -27,6 +26,9 @@ export const createCamera = () => {
     const janitor = new Janitor;
 
     return {
+        get rotateSpeed() {
+            return CAMERA_ROTATE_SPEED;
+        },
         cameraState: CameraState.RotateAroundWraiths,
         get() {
             return camera;
@@ -54,12 +56,14 @@ export const createCamera = () => {
                     controls.zoomTo(2);
                     controls.setLookAt(-4, -23, -36, 0, 0, 0, false);
                 }
+                controls.enabled = false;
                 setTimeout(() => {
                     this.cameraState = CameraState.RotateAroundWraiths;
                     playWraithComms(0)
                     controls.setTarget(0, 0, 0);
                     controls.zoomTo(2);
                     controls.setLookAt(_prevPosition.x, _prevPosition.y, _prevPosition.z, 0, 0, 0);
+                    controls.enabled = true;
                 }, 10000);
             }, 90000);
 
@@ -77,16 +81,16 @@ export const createCamera = () => {
                 delta
             );
 
-            _cameraRotateSpeed = MathUtils.damp(
-                _cameraRotateSpeed,
-                _destCameraSpeed,
-                0.00001,
-                delta
-            );
+            // _cameraRotateSpeed = MathUtils.damp(
+            //     _cameraRotateSpeed,
+            //     _destCameraSpeed,
+            //     0.0001,
+            //     delta
+            // );
 
             if (this.cameraState === CameraState.RotateAroundWraiths) {
 
-                controls.rotate(Math.PI / _cameraRotateSpeed, 0);
+                controls.rotate(Math.PI / CAMERA_ROTATE_SPEED, 0, true);
                 controls.rotatePolarTo(_polarAngle);
             }
         }

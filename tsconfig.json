@@ -107,6 +107,7 @@
     "paths": {
       "@utils/*": ["./src/utils/*"],
       "@audio/*": ["./src/audio/*"],
+      "@renderer": ["./src/renderer"]
     },
   }
 }

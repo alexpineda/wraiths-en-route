@@ -8,7 +8,7 @@ export const createAsteroids = () => {
     let asteroids: InstancedMesh;
 
     return {
-        async load(envmap: Texture) {
+        async load(envmap: Texture | null) {
 
             const { model: asteroid } = await loadGlb("./asteroid.glb", envmap);
 

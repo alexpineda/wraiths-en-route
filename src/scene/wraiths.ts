@@ -22,7 +22,7 @@ export type Wraith = Object3D & {
 const wraithRed = 0xff0000;
 const wraithBlue = 0x0033ff;
 
-const createWraith = (og: Object3D, originalPosition: Vector3, particles: ParticleSystem, i: number) => {
+const createWraith = (og: Object3D, originalPosition: Vector3, particles: ParticleSystem, i: number, quality: number) => {
     let swerveRate = 1000;
     let nextSwerveRate = 1000;
     let _nextSwerveAngle = Math.PI / 3.5;
@@ -40,14 +40,15 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
     const burnerLight = new PointLight(0xff5500, 20, 1.5, 10);
     burnerLight.position.set(0, 0.1, -0.3);
     wraith.add(burnerLight);
+    const baseBurnerIntensity = 20;
 
     const rightBlinker = new PointLight(i ? wraithRed : wraithBlue, 2, 1, 7);
     rightBlinker.position.set(-0.2, -0.2, -0.05);
-    wraith.add(rightBlinker);
+    quality > 1 && wraith.add(rightBlinker);
 
     const leftBlinker = new PointLight(i ? wraithRed : wraithBlue, 2, 1, 7);
     leftBlinker.position.set(0.2, -0.2, -0.05);
-    wraith.add(leftBlinker);
+    quality > 1 && wraith.add(leftBlinker);
 
     let _a = 0;
     let _b = 0;
@@ -88,11 +89,15 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
                 burners.scale.setScalar(1.4);
                 this.swerveDamp = 0.0001;
                 boostDamp = 0.0001;
+                burnerLight.distance = 2.5;
+                burnerLight.intensity = baseBurnerIntensity * 1.5;
             } else {
                 _nextSwerveAngle = Math.PI / 3.5;
                 burners.scale.setScalar(1);
                 this.swerveDamp = 0.001;
                 boostDamp = 0.00001;
+                burnerLight.distance = 1.5;
+                burnerLight.intensity = baseBurnerIntensity;
             }
 
             swerveRate = MathUtils.damp(swerveRate, nextSwerveRate, this.swerveRateDamp, delta);
@@ -126,7 +131,7 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
 };
 
 
-export const createWraiths = () => {
+export const createWraiths = (quality: number) => {
 
     const wraiths: Wraith[] = [];
     const wraithGroup = new Group;
@@ -134,7 +139,6 @@ export const createWraiths = () => {
 
     const quadrant = quadrants(4, Math.PI / 4);
     const janitor = new Janitor;
-
 
     return {
         po: {
@@ -152,7 +156,7 @@ export const createWraiths = () => {
         isBoosting() {
             return wraiths.some(w => w.boostMode);
         },
-        async load(envmap: Texture, particle: Texture) {
+        async load(envmap: Texture | null, particle: Texture) {
 
             const filename = window.location.search ? "./wraith.glb" : "./wraith-compressed.glb";
             const { model } = await loadGlb(filename, envmap);
@@ -186,7 +190,7 @@ export const createWraiths = () => {
 
             burners = createParticles({
                 id: "wraith-burners",
-                count: 5000,
+                count: 2000 + quality * 3000,
                 sizeAttenuation: true,
                 lookAt: true,
                 sortParticles: false,
@@ -216,9 +220,9 @@ export const createWraiths = () => {
                 }
             });
 
-            const w1 = createWraith(model, new Vector3(0, 0, 0), burners, 0);
-            const w2 = createWraith(model, new Vector3(4, 0.2, 0), burners, 1);
-            const w3 = createWraith(model, new Vector3(-2, -0.1, -1.2), burners, 2);
+            const w1 = createWraith(model, new Vector3(0, 0, 0), burners, 0, quality);
+            const w2 = createWraith(model, new Vector3(4, 0.2, 0), burners, 1, quality);
+            const w3 = createWraith(model, new Vector3(-2, -0.1, -1.2), burners, 2, quality);
 
             wraiths.push(w1, w2, w3);
             wraithGroup.add(w1, w2, w3);

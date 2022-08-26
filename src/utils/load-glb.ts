@@ -13,8 +13,15 @@ import {
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { MeshoptDecoder } from "./mesh-opt-decoder";
 import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader";
+import { renderer } from "@renderer";
 
 let assetIndex = 0;
+
+var ktx2Loader = new KTX2Loader();
+ktx2Loader.setTranscoderPath('./basis/');
+ktx2Loader.detectSupport(renderer);
+
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2Loader);
 
 export type GlbResponse = {
   model: Group;
@@ -29,13 +36,9 @@ export function loadGlb(
   assetIndex++;
   return new Promise((resolve, reject) => {
     const index = assetIndex;
-    var ktx2Loader = new KTX2Loader();
-    ktx2Loader.setTranscoderPath('./basis/');
-    const r = new WebGLRenderer;
-    ktx2Loader.detectSupport(r);
-    r.dispose();
 
-    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2Loader).load(
+
+    loader.load(
       file,
       (glb: any) => {
         const { scene: model, animations } = glb;
