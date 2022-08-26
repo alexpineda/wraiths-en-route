@@ -22,8 +22,9 @@ export const createBattleCruiser = () => {
         color: new Color(1, 1, 1),
         coordMultipler: new Vector3(.1, .1, .1),
         async load(envmap: Texture, particle: Texture) {
+            const filename = window.location.search ? "./battlecruiser.glb" : "./battlecruiser-compressed.glb";
             const { model } = await loadGlb(
-                "./bc2.glb",
+                filename,
                 envmap
             );
             battleCruiser = model;
