@@ -45,11 +45,7 @@ const surface = new Surface(renderer.domElement);
 export const getSurface = () => surface;
 
 export const wraithScene = (quality: number) => {
-    if (window.DeviceOrientationEvent) {
-        window.addEventListener("deviceorientation", function (evt) {
-            mouse.y = (MathUtils.clamp(evt.beta ?? 0, 40, 80) - 40) / 40 * 2 - 1;
-        }, true);
-    }
+
     const camera = createCamera(quality);
 
     const controls = new CameraControls(camera.get(), document.body);
@@ -165,7 +161,7 @@ export const wraithScene = (quality: number) => {
     const _touchmove = (evt: TouchEvent) => {
         if (evt.touches[0]) {
             const x = (evt.touches[0].clientX / window.innerWidth) * 2 - 1;
-            controls.dolly(-Math.sign(x) * 0.1, true);
+            controls.dolly(-Math.sign(x) * 0.2, true);
         }
     }
 
@@ -173,6 +169,7 @@ export const wraithScene = (quality: number) => {
     const bloomEffect = new BloomEffect({
         intensity: 1.25,
         blendFunction: BlendFunction.SCREEN,
+        mipmapBlur: true,
     })
 
     async function init() {
@@ -187,6 +184,11 @@ export const wraithScene = (quality: number) => {
         janitor.addEventListener(window, "mousemove", _mousemove, { passive: true });
         janitor.addEventListener(window, "wheel", _mousewheel, { passive: true });
         janitor.addEventListener(window, "touchmove", _touchmove, { passive: true });
+        if (window.DeviceOrientationEvent) {
+            janitor.addEventListener(window, "deviceorientation", function (evt: DeviceOrientationEvent) {
+                mouse.y = (MathUtils.clamp(evt.beta ?? 0, 40, 80) - 40) / 40 * 2 - 1;
+            }, { passive: true });
+        }
         _sceneResizeHandler();
 
         const scene = new Scene();
