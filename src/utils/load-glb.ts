@@ -6,10 +6,13 @@ import {
   Mesh,
   Object3D,
   sRGBEncoding,
-  Texture
+  Texture,
+  WebGLRenderer
 } from "three";
 
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { MeshOptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader";
 
 let assetIndex = 0;
 
@@ -27,7 +30,13 @@ export function loadGlb(
   console.log(assetIndex)
   return new Promise((resolve, reject) => {
     const index = assetIndex;
-    new GLTFLoader().load(
+    var ktx2Loader = new KTX2Loader();
+    ktx2Loader.setTranscoderPath('./basis/');
+    const r = new WebGLRenderer;
+    ktx2Loader.detectSupport(r);
+    r.dispose();
+
+    new GLTFLoader().setMeshoptDecoder(MeshOptDecoder).setKTX2Loader(ktx2Loader).load(
       file,
       (glb: any) => {
         const { scene: model, animations } = glb;

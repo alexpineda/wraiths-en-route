@@ -130,7 +130,7 @@ export const createWraiths = () => {
         },
         async load(envmap: Texture, particle: Texture) {
 
-            const { model } = await loadGlb("./wraith.glb", envmap);
+            const { model } = await loadGlb("./wraith2.glb", envmap);
 
             model.traverse((o: Object3D) => {
                 if (o instanceof Mesh) {

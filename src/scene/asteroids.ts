@@ -25,10 +25,10 @@ export const createAsteroids = () => {
             asteroids = new InstancedMesh(
                 (asteroid.children[0] as Mesh).geometry,
                 (asteroid.children[0] as Mesh).material,
-                20
+                5
             );
 
-            range(0, 5).forEach((i: number) => {
+            range(0, asteroids.count).forEach((i: number) => {
                 const pos = new Vector3(
                     MathUtils.randInt(60, 80),
                     MathUtils.randInt(0, 30),

@@ -23,7 +23,7 @@ export const createBattleCruiser = () => {
         coordMultipler: new Vector3(.1, .1, .1),
         async load(envmap: Texture, particle: Texture) {
             const { model } = await loadGlb(
-                "./battlecruiser.glb",
+                "./bc2.glb",
                 envmap
             );
             battleCruiser = model;
