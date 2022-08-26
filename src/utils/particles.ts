@@ -2,7 +2,7 @@ import { AdditiveBlending, DoubleSide, DynamicDrawUsage } from 'three/src/consta
 import { ShaderMaterial } from 'three/src/materials/ShaderMaterial';
 import { Vector2 } from 'three/src/math/Vector2';
 import { Vector3 } from 'three/src/math/Vector3';
-import { Box3, BufferGeometry, Color, InstancedMesh, Matrix4, Object3D, PlaneBufferGeometry } from 'three';
+import { Box3, BufferGeometry, Color, InstancedMesh, Matrix4, Object3D, PlaneBufferGeometry, Quaternion } from 'three';
 import { InstancedUniformsMesh } from 'three-instanced-uniforms-mesh';
 
 
@@ -50,7 +50,26 @@ uniform float uSize;
 uniform mat4 uMatrix;
 
 void main() {
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * uMatrix * vec4(position, 1.0);
+    mat4 mv =  modelMatrix * uMatrix;
+    vec3 pos = position;
+
+    #ifdef ALWAYS_FACE_CAMERA
+        //mv[0][0] = 1.;
+        mv[0][1] = 0.;
+        mv[0][2] = 0.;
+        mv[1][0] = 0.;
+        //mv[1][1] = 1.;
+        mv[1][2] = 0.;
+        mv[2][0] = 0.;
+        mv[2][1] = 0.;
+        //mv[2][2] = 1.;
+
+        pos *= inverse(mat3(viewMatrix));
+    #endif
+
+    gl_Position = projectionMatrix * viewMatrix * mv * vec4(pos, 1.);
+    
+    // gl_Position = projectionMatrix * viewMatrix * modelMatrix * uMatrix * vec4(position, 1.0);
 
     #ifdef USE_SPRITEMAP
 
@@ -84,7 +103,7 @@ export interface ParticleSystemDefinition {
     sortParticles: boolean;
     sizeAttenuation: boolean;
     geometry?: BufferGeometry;
-    lookAt?: boolean,
+    alwaysFaceCamera?: boolean,
     update: (t: number, delta: number, particle: Particle, opts: ParticleSystemDefinition) => void;
     spriteMap?: {
         tex: THREE.Texture;
@@ -140,7 +159,7 @@ export function createParticles<T extends ParticleSystemDefinition>(_opts: T) {
         uniforms: {
             diffuseTexture: { value: opts.spriteMap?.tex },
             uFrameDimensions: { value: new Vector2(opts.spriteMap?.width ?? 1, opts.spriteMap?.height ?? 1) },
-
+            uTime: { value: 0 },
             // instanced attributes (via troika-instanced-uniforms-mesh)
             uSize: { value: 1 },
             uColor: { value: new Color(0xffffff) },
@@ -152,6 +171,10 @@ export function createParticles<T extends ParticleSystemDefinition>(_opts: T) {
 
     if (opts.spriteMap) {
         material.defines.USE_SPRITEMAP = 1;
+    }
+
+    if (opts.alwaysFaceCamera) {
+        material.defines.ALWAYS_FACE_CAMERA = 1;
     }
 
 
@@ -188,19 +211,14 @@ export function createParticles<T extends ParticleSystemDefinition>(_opts: T) {
     let gdfsghk = 0;
 
     const dummy = new Object3D;
-    const mat = new Matrix4;
 
     const updateGeometry = () => {
         let particle: Particle;
         for (let i = 0; i < opts.count; i++) {
             particle = particles[i];
 
-            if (particle === undefined) {
-                debugger;
-            }
             dummy.position.copy(particle.position);
             dummy.scale.setScalar(particle.currentSize);
-            opts.lookAt && dummy.lookAt(window.camera.position);
             dummy.updateMatrix();
 
             mesh.setUniformAt('uMatrix', i, dummy.matrix);
@@ -251,6 +269,7 @@ export function createParticles<T extends ParticleSystemDefinition>(_opts: T) {
         },
         update(camera: THREE.PerspectiveCamera, delta: number) {
             const d = delta / 1000;
+            material.uniforms.uTime.value += delta;
             updateParticles(camera, d);
             updateGeometry();
         },
@@ -265,10 +284,6 @@ export function createParticles<T extends ParticleSystemDefinition>(_opts: T) {
                     cloned.geometry.attributes[attr].needsUpdate = true;
                 }
             }
-            // cloned._baseMaterial = mesh._baseMaterial;
-            // cloned._derivedMaterial = mesh._derivedMaterial;
-            // cloned._baseGeometry = mesh._baseGeometry;
-            // cloned._derivedGeometry = mesh._derivedGeometry;
             return { object: cloned, update };
         }
     };
