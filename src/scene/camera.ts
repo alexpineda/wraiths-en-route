@@ -14,17 +14,13 @@ const evolvingCameraStates = [CameraState.UnderBattleCruiser, CameraState.UnderW
 let _evolvingCameraState = -1;
 let _prevPosition = new Vector3();
 
-export const CAMERA_ROTATE_SPEED = 5000;
-let _cameraRotateSpeed = CAMERA_ROTATE_SPEED / 2;
+export const CAMERA_ROTATE_SPEED = 8000;
+let _cameraRotateSpeed = CAMERA_ROTATE_SPEED / 4;
 let _destCameraSpeed = CAMERA_ROTATE_SPEED;
 
-let _paused = false;
-window.pauseCamera = () => {
-    _paused = !_paused;
-}
+
 export const createCamera = () => {
     let _polarAngleRange = 0;
-    let _minPolarAngle = 0;
     let _polarAngle = 0;
 
     const camera = new PerspectiveCamera(110, 1, 0.1, 100000);
@@ -36,8 +32,7 @@ export const createCamera = () => {
             return camera;
         },
         init(controls: CameraControls, battleCruiser: Object3D) {
-            _minPolarAngle = _polarAngle = controls.polarAngle;
-            _polarAngleRange = (Math.PI / 2 - _minPolarAngle) * 4;
+            _polarAngleRange = Math.PI / 8
 
             janitor.setInterval(() => {
                 if (this.cameraState === CameraState.RotateAroundWraiths) {
@@ -71,30 +66,21 @@ export const createCamera = () => {
 
             return () => janitor.mopUp()
         },
-        update(delta: number, controls: CameraControls, normalizedAzimuthAngle: number, mouse: Vector3) {
-            if (_paused) return;
-            if (
-                normalizedAzimuthAngle > Math.PI * (4 / 3) &&
-                normalizedAzimuthAngle < Math.PI * (5 / 3)
-            ) {
-                _destCameraSpeed = CAMERA_ROTATE_SPEED / 4;
-            } else {
-                _destCameraSpeed = CAMERA_ROTATE_SPEED;
-
-            }
-            _destCameraSpeed * Math.sign(mouse.x)
+        elapsed: 0,
+        update(delta: number, controls: CameraControls, mouse: Vector3) {
+            this.elapsed += delta / 1000;
 
             _polarAngle = MathUtils.damp(
                 _polarAngle,
-                _minPolarAngle + Math.sin(delta / 1000) * _polarAngleRange * Math.sign(mouse.y),
-                0.001,
+                Math.PI / 2 + mouse.y * mouse.y * Math.sign(mouse.y) * _polarAngleRange,
+                0.0005,
                 delta
             );
 
             _cameraRotateSpeed = MathUtils.damp(
                 _cameraRotateSpeed,
                 _destCameraSpeed,
-                0.0001,
+                0.00001,
                 delta
             );
 

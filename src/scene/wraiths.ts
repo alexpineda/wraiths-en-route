@@ -5,6 +5,7 @@ import { ParticleSystem, Particle, createParticles, defaultUpdate, ParticleSyste
 import loadGlb from "@utils/load-glb";
 import { playWraithComms } from "./wraith-noise";
 import { quadrants } from "@utils/quadrants";
+import Janitor from "@utils/janitor";
 
 export type Wraith = Object3D & {
     init: () => void;
@@ -14,6 +15,7 @@ export type Wraith = Object3D & {
     swerveMax: number;
     swerveRateDamp: number;
     swerveDamp: number;
+    boostMode: boolean;
     [key: string]: any;
 };
 
@@ -32,6 +34,8 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
     ];
 
     const wraith = og.clone(true) as Wraith;
+    const boostPosition = (new Vector3).copy(originalPosition).add(new Vector3(0, 0, 10));
+    let targetZ = originalPosition.z;
 
     const burnerLight = new PointLight(0xff5500, 20, 1.5, 10);
     burnerLight.position.set(0, 0.1, -0.3);
@@ -55,8 +59,10 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
     wraith.add(burners);
 
     const elapsed = [0, 0, 0, 0];
+    let boostDamp = 0.001;
 
     return Object.assign(wraith, {
+        boostMode: false,
         init() {
             this.position.copy(originalPosition);
 
@@ -77,6 +83,18 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
         swerveRateDamp: 0.001,
         swerveDamp: 0.001,
         update(delta: number) {
+            if (this.boostMode === true) {
+                _nextSwerveAngle = Math.PI * 2;
+                burners.scale.setScalar(1.4);
+                this.swerveDamp = 0.0001;
+                boostDamp = 0.0001;
+            } else {
+                _nextSwerveAngle = Math.PI / 3.5;
+                burners.scale.setScalar(1);
+                this.swerveDamp = 0.001;
+                boostDamp = 0.00001;
+            }
+
             swerveRate = MathUtils.damp(swerveRate, nextSwerveRate, this.swerveRateDamp, delta);
             if (Math.abs(swerveRate - nextSwerveRate) < 1) {
                 nextSwerveRate = MathUtils.randInt(this.swerveMin, this.swerveMax);
@@ -93,9 +111,11 @@ const createWraith = (og: Object3D, originalPosition: Vector3, particles: Partic
                 this.swerveDamp,
                 delta
             );
+            targetZ = MathUtils.damp(targetZ, this.boostMode ? boostPosition.z : originalPosition.z, boostDamp, delta);
+
             this.position.x = originalPosition.x + Math.sin(elapsed[0]) * 0.3;
             this.position.y = originalPosition.y + Math.sin(elapsed[1]) * 0.3;
-            this.position.z = originalPosition.z + Math.sin(elapsed[2]) * 0.3;
+            this.position.z = targetZ + Math.sin(elapsed[2]) * 0.3;
             updateBurners()
         },
         dispose() {
@@ -112,8 +132,8 @@ export const createWraiths = () => {
     const wraithGroup = new Group;
     let burners: ParticleSystem;
 
-
     const quadrant = quadrants(4, Math.PI / 4);
+    const janitor = new Janitor;
 
 
     return {
@@ -127,6 +147,10 @@ export const createWraiths = () => {
             scale: 0.5,
             color: new Color(1, 0.5, 0.1),
             velocity: new Vector3(0, 0, -700),
+        },
+        position: new Vector3,
+        isBoosting() {
+            return wraiths.some(w => w.boostMode);
         },
         async load(envmap: Texture, particle: Texture) {
 
@@ -168,8 +192,6 @@ export const createWraiths = () => {
                 sortParticles: false,
                 update: (t: number, delta: number, p: Particle, opts: ParticleSystemDefinition) => {
                     particleUpdate(t, delta, p, opts);
-                    // p.frame = 10;
-
                 },
                 spriteMap: {
                     tex: particle,
@@ -198,9 +220,6 @@ export const createWraiths = () => {
             const w2 = createWraith(model, new Vector3(4, 0.2, 0), burners, 1);
             const w3 = createWraith(model, new Vector3(-2, -0.1, -1.2), burners, 2);
 
-            // burners.object.position.set(0, 0, -0.2);
-            // w1.add(burners.object);
-
             wraiths.push(w1, w2, w3);
             wraithGroup.add(w1, w2, w3);
 
@@ -208,26 +227,34 @@ export const createWraiths = () => {
         init() {
             for (const wraith of wraiths) {
                 wraith.init();
+                janitor.add(wraith);
             }
+            janitor.addEventListener(window, "click", _ => {
+                const i = MathUtils.randInt(0, 2);
+                if (wraiths[i].boostMode === true) return;
+
+                wraiths[i].boostMode = true;
+                setTimeout(() => {
+                    wraiths[i].boostMode = false;
+                }, 10000);
+            })
         },
         update(delta: number, camera: PerspectiveCamera, azimuth: number, rear: number, playComms: boolean) {
+            this.position.set(0, 0, 0);
             for (const wraith of wraiths) {
                 wraith.update(delta);
+                this.position.add(wraith.position);
             }
+            this.position.divideScalar(3);
             burners.update(camera, delta);
 
             if (playComms && quadrant.entered(0, azimuth)) {
                 playWraithComms(rear);
             }
 
-            // this.po.color.g = 0.5 + rear * 0.5;
-            // this.po.color.b = 0.1 + rear * 0.9;
-
         },
         dispose() {
-            for (const wraith of wraiths) {
-                wraith.dispose();
-            }
+            janitor.mopUp();
         },
         get wraiths() {
             return wraiths;

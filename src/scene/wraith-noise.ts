@@ -41,6 +41,7 @@ export const createWraithNoise = () => {
             highNoise.start();
         },
         set value(val: number) {
+            console.log(val)
             const h = MathUtils.lerp(0.75, 1, val);
 
             gain.gain.value = 0.5 * h;

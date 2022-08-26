@@ -28,7 +28,6 @@ import {
     Vector2,
     Vector3,
     WebGLRenderer,
-    DefaultLoadingManager
 } from "three";
 import CameraControls from "camera-controls";
 import * as THREE from "three";
@@ -47,13 +46,14 @@ import { loadSkybox } from "@utils/skybox";
 CameraControls.install({ THREE: THREE });
 
 const camera = createCamera();
-window.camera = camera.get();
 
 const controls = new CameraControls(camera.get(), document.body);
 controls.maxPolarAngle = Infinity;
 controls.minPolarAngle = -Infinity;
 controls.maxAzimuthAngle = Infinity;
 controls.minAzimuthAngle = -Infinity;
+controls.maxDistance = 8;
+controls.minDistance = 2.5
 
 const chromaticAberrationEffect = new ChromaticAberrationEffect();
 const glitchMax = new Vector2(0.05, 0.08);
@@ -115,19 +115,29 @@ const INTRO_LOOP = async (elapsed: number) => {
             ? azimuth / Math.PI
             : 2 - azimuth / Math.PI;
 
-    camera.update(delta, controls, azimuth, mouse);
+    camera.update(delta, controls, mouse);
 
     wraiths.update(delta, camera.get(), azimuth, rear, camera.cameraState === CameraState.RotateAroundWraiths);
     battleCruiser.update(delta, CAMERA_ROTATE_SPEED, camera.get());
     starfield.update(azimuth, camera.get(), delta);
     battleLights.update(camera.get(), delta, azimuth);
 
-    wraithNoise.value = camera.cameraState === CameraState.RotateAroundWraiths ? rear : 0;
-    const g = camera.cameraState !== CameraState.UnderWraiths ? MathUtils.smoothstep(Math.pow(rear, 2.5), 0.25, 1) : 0;
+    const camDistance = (1 - (controls.distance - controls.minDistance) / (controls.maxDistance - controls.minDistance));
+
+    wraithNoise.value = camera.cameraState === CameraState.RotateAroundWraiths ? (0.2 + rear * 0.6) * (1 + Math.pow(camDistance, 3) * 0.2) : 0;
+
+    let g = 0;
+    if (camera.cameraState !== CameraState.UnderWraiths) {
+        g = wraiths.isBoosting() ? Math.max(0.25, rear) : MathUtils.smoothstep(Math.pow(rear, 2) * (1 + Math.pow(camDistance, 3)), 0.25, 1);
+    }
     glitchEffect.minStrength = glitchMax.x * g;
     glitchEffect.maxStrength = glitchMax.y * g;
     bloomEffect.intensity = 0.5 + rear * 1;
     starfield.object.position.copy(camera.get().position);
+
+    if (camera.cameraState === CameraState.RotateAroundWraiths) {
+        controls.setTarget(wraiths.position.x, wraiths.position.y, wraiths.position.z, true);
+    }
 
     composer.render(delta);
 };
@@ -175,6 +185,10 @@ const _mousemove = (ev: MouseEvent) => {
     mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
     mouse.y = (ev.clientY / window.innerHeight) * 2 - 1;
 };
+
+window.addEventListener("wheel", evt => {
+    controls.dolly(-Math.sign(evt.deltaY) * 0.1, true);
+})
 
 export const getSurface = () => surface;
 const bloomEffect = new BloomEffect({

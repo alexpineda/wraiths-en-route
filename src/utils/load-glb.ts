@@ -27,7 +27,6 @@ export function loadGlb(
   meshCb: (mesh: Mesh) => void = () => { }
 ): Promise<GlbResponse> {
   assetIndex++;
-  console.log(assetIndex)
   return new Promise((resolve, reject) => {
     const index = assetIndex;
     var ktx2Loader = new KTX2Loader();
