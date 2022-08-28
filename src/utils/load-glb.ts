@@ -1,13 +1,14 @@
 import { useStore } from "../store";
 import {
   AnimationClip,
+  BufferGeometry,
   Color,
   Group,
   Mesh,
+  MeshStandardMaterial,
   Object3D,
   sRGBEncoding,
   Texture,
-  WebGLRenderer
 } from "three";
 
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";

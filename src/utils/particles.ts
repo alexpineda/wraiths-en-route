@@ -50,26 +50,28 @@ uniform float uSize;
 uniform mat4 uMatrix;
 
 void main() {
-    mat4 mv =  modelMatrix * uMatrix;
-    vec3 pos = position;
+    mat4 mv = viewMatrix * modelMatrix * uMatrix;
 
     #ifdef ALWAYS_FACE_CAMERA
-        //mv[0][0] = 1.;
+        float xx = mv[0][0];
+        float yy = mv[0][1];
+        float zz = mv[0][2];
+
+        float d = sqrt( xx*xx + yy*yy + zz*zz );
+
+        mv[0][0] = d;
         mv[0][1] = 0.;
         mv[0][2] = 0.;
         mv[1][0] = 0.;
-        //mv[1][1] = 1.;
+        mv[1][1] = d;
         mv[1][2] = 0.;
         mv[2][0] = 0.;
         mv[2][1] = 0.;
-        //mv[2][2] = 1.;
-
-        pos *= inverse(mat3(viewMatrix));
+        mv[2][2] = d;
     #endif
 
-    gl_Position = projectionMatrix * viewMatrix * mv * vec4(pos, 1.);
+    gl_Position = projectionMatrix * mv * vec4(position, 1.);
     
-    // gl_Position = projectionMatrix * viewMatrix * modelMatrix * uMatrix * vec4(position, 1.0);
 
     #ifdef USE_SPRITEMAP
 
